@@ -1,0 +1,149 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '15.0'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  $FirebaseAsStaticFramework = true
+  # Xcode 14.2 ships with iOS 16.2 SDK + Swift 5.7; Firebase iOS SDK 12.x
+  # requires newer Swift toolchains. Pin to an older Firebase SDK that builds
+  # on Xcode 14.2 so the iOS simulator can run.
+  $FirebaseSDKVersion = '10.15.0'
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+# post_install do |installer|
+#   installer.pods_project.targets.each do |target|
+#     flutter_additional_ios_build_settings(target)
+#   end
+# end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+
+        ## dart: PermissionGroup.camera
+        'PERMISSION_CAMERA=1',
+
+        ## dart: PermissionGroup.microphone
+        'PERMISSION_MICROPHONE=1',
+
+        ## dart: PermissionGroup.photos
+        'PERMISSION_PHOTOS=1',
+
+        ## dart: PermissionGroup.mediaLibrary
+        # 'PERMISSION_MEDIA_LIBRARY=1',
+
+        ## dart: PermissionGroup.contacts
+        # 'PERMISSION_CONTACTS=1',
+
+        ## dart: PermissionGroup.notifications
+        'PERMISSION_NOTIFICATIONS=1',
+
+        ## dart: PermissionGroup.locationWhenInUse
+        # 'PERMISSION_LOCATION_WHEN_IN_USE=1',
+
+        ## dart: [PermissionGroup.location, PermissionGroup.locationAlways, PermissionGroup.locationWhenInUse]
+        # 'PERMISSION_LOCATION=1',
+      ]
+    end
+    flutter_additional_ios_build_settings(target)
+  end
+
+  # ---------------------------------------------------------------------------
+  # Xcode 14.2 (iOS 16.2 SDK) compatibility patches
+  # ---------------------------------------------------------------------------
+  # Some pods reference iOS 17-only APIs (e.g. SDWebImage HDR helpers). Even when
+  # guarded by @available, older SDKs fail to compile due to missing symbols.
+  begin
+    require 'fileutils'
+
+    # 1) UIImage.isHighDynamicRange (iOS 17+) reference
+    ui_meta = File.join(__dir__, 'Pods', 'SDWebImage', 'SDWebImage', 'Core', 'UIImage+Metadata.m')
+    if File.exist?(ui_meta)
+      begin
+        File.chmod(0644, ui_meta)
+      rescue
+        # ignore
+      end
+      begin
+        system("chmod u+w \"#{ui_meta}\"")
+      rescue
+        # ignore
+      end
+
+      contents = File.read(ui_meta)
+      needle = 'return self.isHighDynamicRange;'
+      replacement = 'return [SDImageCoderHelper CGImageIsHDR:self.CGImage];'
+      if contents.include?(needle)
+        File.open(ui_meta, 'w') { |f| f << contents.gsub(needle, replacement) }
+      end
+    end
+
+    # 2) ImageIO HDR decode constants (iOS 17+) references
+    io_coder = File.join(__dir__, 'Pods', 'SDWebImage', 'SDWebImage', 'Core', 'SDImageIOAnimatedCoder.m')
+    if File.exist?(io_coder)
+      begin
+        File.chmod(0644, io_coder)
+      rescue
+        # ignore
+      end
+      begin
+        system("chmod u+w \"#{io_coder}\"")
+      rescue
+        # ignore
+      end
+
+      contents = File.read(io_coder)
+      hdr_if = 'if (@available(macOS 14, iOS 17, tvOS 17, watchOS 10, *)) {'
+      unless contents.include?('__IPHONE_OS_VERSION_MAX_ALLOWED')
+        if contents.include?(hdr_if)
+          contents = contents.gsub(
+            hdr_if,
+            "#if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 170000\n    #{hdr_if}"
+          )
+          contents = contents.gsub(
+            "\n    }\n  \n    CGImageRef imageRef;",
+            "\n    }\n#endif\n  \n    CGImageRef imageRef;"
+          )
+          File.open(io_coder, 'w') { |f| f << contents }
+        end
+      end
+    end
+  rescue => e
+    puts "iOS 16.2 compatibility patch skipped: #{e}"
+  end
+end

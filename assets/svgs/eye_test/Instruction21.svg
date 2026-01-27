@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="234" height="251" viewBox="0 0 234 251">
+  <defs>
+    <filter id="Ellipse_1155" x="139" y="157" width="94" height="94" filterUnits="userSpaceOnUse">
+      <feOffset dy="3" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feFlood flood-opacity="0.161"/>
+      <feComposite operator="in" in2="blur"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="Group_858" data-name="Group 858" transform="translate(-71 -102)">
+    <g id="Group_857" data-name="Group 857">
+      <g id="noun_Glasses_1358997" transform="translate(112.721 -160.686)">
+        <path id="Path_223" data-name="Path 223" d="M110.683,59.735a9.6,9.6,0,0,1,6.479,5.468c6.479,20.914,8.2,21.378,16.4,30.728s32.806,12,49.7,4.565,18.672-40.16,18.672-40.16l4.429-4.7V40.981c-14.216-4.483-57.109-5.03-85.24,2.87a99.182,99.182,0,0,1-20.64,0C71.125,35.732,28.669,36.717,15,40.981V55.635l4.429,4.7s1.941,32.806,18.727,40.187,41.554,4.812,49.728-4.647,9.842-9.842,16.4-30.728a9.6,9.6,0,0,1,6.4-5.413Zm64.108,38.273c-16.813,4.073-34.583,1.668-41.773-11.537s-8.885-27.147-3.609-32.177c0,0,5.468-6.971,20.64-7.928s37.727-3.226,42.647,10.224S191.6,94.045,174.791,98.118ZM28.669,56.591C33.481,43.141,56.007,45.656,71.18,46.5s20.64,7.928,20.64,7.928c5.276,5.03,3.609,18.973-3.609,32.177s-24.96,15.61-41.773,11.537S23.994,70.042,28.669,56.591Z" transform="translate(-35.721 315.686)" fill="#181d3d"/>
+      </g>
+      <g id="Ellipse_1154" data-name="Ellipse 1154" transform="translate(71 102)" fill="none" stroke="#34a20d" stroke-width="15">
+        <circle cx="117" cy="117" r="117" stroke="none"/>
+        <circle cx="117" cy="117" r="109.5" fill="none"/>
+      </g>
+      <g transform="matrix(1, 0, 0, 1, 71, 102)" filter="url(#Ellipse_1155)">
+        <circle id="Ellipse_1155-2" data-name="Ellipse 1155" cx="38" cy="38" r="38" transform="translate(148 163)" fill="#fff"/>
+      </g>
+    </g>
+    <path id="Icon_awesome-check" data-name="Icon awesome-check" d="M15.193,37.28.655,22.742a2.237,2.237,0,0,1,0-3.163l3.163-3.163a2.237,2.237,0,0,1,3.163,0l9.794,9.794L37.752,5.232a2.237,2.237,0,0,1,3.163,0L44.078,8.4a2.237,2.237,0,0,1,0,3.163L18.357,37.28A2.237,2.237,0,0,1,15.193,37.28Z" transform="matrix(1, 0.017, -0.017, 1, 235.008, 281.357)" fill="#34a20d"/>
+  </g>
+</svg>

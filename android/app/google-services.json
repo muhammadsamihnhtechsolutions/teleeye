@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1090542890690",
+    "project_id": "beh-doctor",
+    "storage_bucket": "beh-doctor.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1090542890690:android:e3ece2978a2f28dc7e155b",
+        "android_client_info": {
+          "package_name": "com.beh.eyedoctor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjPhATGyTJlugfHjzRSi6wTtRtps1uFLc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1090542890690:android:17c81a20e0b1596e7e155b",
+        "android_client_info": {
+          "package_name": "com.beh.teleeye"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjPhATGyTJlugfHjzRSi6wTtRtps1uFLc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
