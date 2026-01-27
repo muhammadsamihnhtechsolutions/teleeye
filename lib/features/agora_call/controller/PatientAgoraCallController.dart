@@ -367,6 +367,9 @@ class PatientAgoraCallController extends GetxController {
   RxBool isMuted = false.obs;
   RxBool isSpeakerOn = false.obs;
   RxBool shouldCloseCallScreen = false.obs;
+  final RxBool isRemoteSpeaking = false.obs;
+
+  
 
   /// 🔥 RINGING STATE
   RxBool isRinging = false.obs;

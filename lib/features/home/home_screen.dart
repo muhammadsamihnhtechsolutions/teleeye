@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:eye_buddy/core/services/utils/size_config.dart';
+import 'package:eye_buddy/features/home/widgets/AddBannerCrouselScreen.dart';
+
 import 'package:eye_buddy/features/home/widgets/home_app_bar.dart';
 import 'package:eye_buddy/features/home/widgets/home_feature_section.dart';
 import 'package:eye_buddy/features/home/widgets/home_slider_section.dart';
@@ -51,8 +53,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const HomeFeatureSection(),
             ),
             CommonSizeBox(height: 10),
+      AdBannerCarouselWidget(),
+            CommonSizeBox(height: 10),
             // const HomeSliderSection(),
-            SizedBox(height: 10),
+    
             SizedBox(height: kToolbarHeight),
           ],
         ),
