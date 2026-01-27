@@ -350,8 +350,10 @@
 //     super.onClose();
 //   }
 // }
+
 import 'dart:developer';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:eye_buddy/features/waiting_for_prescription/view/waiting_for_prescription_screen.dart';
 import 'package:get/get.dart';
 
 class PatientAgoraCallController extends GetxController {
@@ -432,16 +434,22 @@ class PatientAgoraCallController extends GetxController {
   }
 
   /// ---------------- END CALL (PUBLIC) ----------------
+
+
   Future<void> endCall() async {
-    log('📴 endCall() pressed');
+  log('📴 endCall() pressed');
 
-    if (_callEnded) {
-      log('⛔ endCall ignored — already ended');
-      return;
-    }
-
-    await _endCall();
+  if (_callEnded) {
+    log('⛔ endCall ignored — already ended');
+    return;
   }
+
+  await _endCall();
+
+  /// 🔥 NAVIGATION HERE
+  Get.offAll(() => const WaitingForPrescriptionScreen());
+}
+
 
   /// ---------------- JOIN AGORA ----------------
   Future<void> _joinAgora() async {
@@ -553,6 +561,7 @@ class PatientAgoraCallController extends GetxController {
     if (_callEnded) {
       log('⛔ _endCall skipped');
       return;
+      
     }
 
     _callEnded = true;
