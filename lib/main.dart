@@ -3416,12 +3416,761 @@
 // }
 
 
-import 'dart:developer' as developer;
+// onlyandoride
+
+// import 'dart:developer' as developer;
+// import 'dart:convert';
+// import 'dart:io';
+
+// import 'package:eye_buddy/features/reason_for_visit/view/appointment_overview_screen.dart';
+// import 'package:flutter/foundation.dart';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
+
+// import 'package:awesome_notifications/awesome_notifications.dart';
+
+// import 'package:eye_buddy/firebase_options.dart'
+//     if (dart.library.html) 'package:eye_buddy/firebase_options_web.dart';
+
+// import 'package:eye_buddy/features/agora_call/view/PatientAgoraCallScreen.dart';
+// import 'package:eye_buddy/core/services/utils/config/theme.dart';
+// import 'package:eye_buddy/core/services/utils/keys/shared_pref_keys.dart';
+// import 'package:eye_buddy/l10n/app_localizations.dart';
+
+// import 'package:flutter_localizations/flutter_localizations.dart';
+// import 'package:eye_buddy/features/splash/view/splash_screen.dart';
+
+// import 'package:eye_buddy/features/payment_gateway/view/payment_gateway_screen.dart';
+// import 'package:eye_buddy/features/waiting_for_doctor/view/waiting_for_doctor_screen.dart';
+
+// import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
+
+// void dLog(String msg) {
+//   if (kDebugMode) developer.log(msg);
+// }
+
+// /// ------------------------------------------------------------
+// /// SAFE PAYLOAD
+// /// ------------------------------------------------------------
+// Map<String, String> stringifyPayload(Map<String, dynamic> data) {
+//   return data.map((k, v) => MapEntry(k, v?.toString() ?? ''));
+// }
+
+// /// ------------------------------------------------------------
+// /// BACKGROUND / KILLED FCM
+// /// ------------------------------------------------------------
+// @pragma('vm:entry-point')
+// Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   await Firebase.initializeApp(
+//     options: DefaultFirebaseOptions.currentPlatform,
+//   );
+
+//   final meta = message.data['meta'];
+//   if (meta == null || !meta.toString().contains('Calling')) return;
+
+//   await AwesomeNotifications().createNotification(
+//     content: NotificationContent(
+//       id: 1001,
+//       channelKey: 'call_channel',
+//       title: 'Incoming Call',
+//       body: 'Doctor is calling you',
+//       category: NotificationCategory.Call,
+//       wakeUpScreen: true,
+//       fullScreenIntent: true,
+//       locked: true,
+//       payload: stringifyPayload(message.data),
+//     ),
+//     actionButtons: [
+//       NotificationActionButton(
+//         key: 'ACCEPT_CALL',
+//         label: 'Accept',
+//         color: Colors.green,
+//         autoDismissible: true,
+//       ),
+//       NotificationActionButton(
+//         key: 'DECLINE_CALL',
+//         label: 'Decline',
+//         color: Colors.red,
+//         isDangerousOption: true,
+//         autoDismissible: true,
+//         actionType: ActionType.SilentAction,
+//       ),
+//     ],
+//   );
+// }
+
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   MobileAds.instance.initialize();
+
+//   await AwesomeNotifications().initialize(
+//     null,
+//     [
+//       NotificationChannel(
+//         channelKey: 'call_channel',
+//         channelName: 'Incoming Calls',
+//         channelDescription: 'Doctor calling notifications',
+//         importance: NotificationImportance.Max,
+//         playSound: true,
+//         enableVibration: true,
+//         locked: true,
+//       ),
+//     ],
+//   );
+
+//   await AwesomeNotifications().requestPermissionToSendNotifications();
+
+//   await Firebase.initializeApp(
+//     options: DefaultFirebaseOptions.currentPlatform,
+//   );
+
+//   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+//   runApp(const EyeBuddyApp());
+// }
+
+// /// ------------------------------------------------------------
+// /// APP
+// /// ------------------------------------------------------------
+// class EyeBuddyApp extends StatefulWidget {
+//   const EyeBuddyApp({super.key});
+
+//   @override
+//   State<EyeBuddyApp> createState() => _EyeBuddyAppState();
+// }
+
+// class _EyeBuddyAppState extends State<EyeBuddyApp> {
+//   @override
+//   void initState() {
+//     super.initState();
+
+//     _restoreLocale();
+//     _setupAwesomeListener();
+//     _setupForegroundFCM();
+//     _setupTerminatedFCM();
+//     _handleKilledAwesomeAction();
+
+//     // ✅ ANDROID 14+ FULL SCREEN CALL PERMISSION
+//     _ensureAndroidFullScreenIntentPermission();
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// ANDROID 14 FULL SCREEN INTENT PERMISSION
+//   /// ------------------------------------------------------------
+//   Future<void> _ensureAndroidFullScreenIntentPermission() async {
+//     if (!Platform.isAndroid) return;
+
+//     try {
+//       final can = await FlutterCallkitIncoming.canUseFullScreenIntent();
+//       final canUse = (can is bool) ? can : true;
+
+//       if (!canUse) {
+//         if (kDebugMode) {
+//           dLog(
+//             '[CALLKIT] Full-screen intent not allowed, opening settings...',
+//           );
+//         }
+//         await FlutterCallkitIncoming.requestFullIntentPermission();
+//       }
+//     } catch (e) {
+//       if (kDebugMode) {
+//         dLog('[CALLKIT] Full-screen intent check failed: $e');
+//       }
+//     }
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// AWESOME ACTION LISTENER
+//   /// ------------------------------------------------------------
+//   void _setupAwesomeListener() {
+//     AwesomeNotifications().setListeners(
+//       onActionReceivedMethod: (action) async {
+//         final payload = action.payload ?? {};
+
+//         if (action.buttonKeyPressed == 'DECLINE_CALL') {
+//           await AwesomeNotifications().cancel(action.id!);
+//           return;
+//         }
+
+//         if (action.buttonKeyPressed == 'ACCEPT_CALL' ||
+//             action.buttonKeyPressed.isEmpty) {
+//           await AwesomeNotifications().cancel(action.id!);
+
+//           WidgetsBinding.instance.addPostFrameCallback((_) {
+//             _openCallFromPayload(
+//               payload.map((k, v) => MapEntry(k, v.toString())),
+//               autoAccept: action.buttonKeyPressed == 'ACCEPT_CALL',
+//             );
+//           });
+//         }
+//       },
+//     );
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// FOREGROUND CALL
+//   /// ------------------------------------------------------------
+//   void _setupForegroundFCM() {
+//     FirebaseMessaging.onMessage.listen((message) async {
+//       final meta = message.data['meta'];
+//       if (meta == null || !meta.toString().contains('Calling')) return;
+
+//       _openCallFromPayload(stringifyPayload(message.data));
+
+//       await AwesomeNotifications().createNotification(
+//         content: NotificationContent(
+//           id: 1002,
+//           channelKey: 'call_channel',
+//           title: 'Incoming Call',
+//           body: 'Doctor is calling you',
+//           category: NotificationCategory.Call,
+//           payload: stringifyPayload(message.data),
+//         ),
+//       );
+//     });
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// TERMINATED (FCM TAP)
+//   /// ------------------------------------------------------------
+//   void _setupTerminatedFCM() async {
+//     final message =
+//         await FirebaseMessaging.instance.getInitialMessage();
+
+//     if (message == null) return;
+
+//     final meta = message.data['meta'] ?? '';
+//     if (!meta.toString().contains('Calling')) return;
+
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _openCallFromPayload(stringifyPayload(message.data));
+//     });
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// TERMINATED (AWESOME BUTTON)
+//   /// ------------------------------------------------------------
+//   void _handleKilledAwesomeAction() async {
+//     final action =
+//         await AwesomeNotifications().getInitialNotificationAction(
+//       removeFromActionEvents: true,
+//     );
+
+//     if (action == null) return;
+//     if (action.buttonKeyPressed == 'DECLINE_CALL') return;
+
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _openCallFromPayload(
+//         action.payload!.map((k, v) => MapEntry(k, v.toString())),
+//         autoAccept: action.buttonKeyPressed == 'ACCEPT_CALL',
+//       );
+//     });
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// OPEN CALL
+//   /// ------------------------------------------------------------
+//   Future<void> _openCallFromPayload(
+//     Map<String, String> payload, {
+//     bool autoAccept = false,
+//   }) async {
+//     try {
+//       String? channelId;
+//       String? token;
+//       String? doctorName;
+//       String? doctorPhoto;
+
+//       if (payload['meta'] != null && payload['meta']!.isNotEmpty) {
+//         final meta = jsonDecode(payload['meta']!);
+//         final metaData = meta['metaData'];
+
+//         channelId = metaData['_id'];
+//         token = metaData['patientAgoraToken'];
+
+//         final doctor = metaData['doctor'];
+//         doctorName = doctor?['name'];
+//         doctorPhoto = doctor?['photo'];
+//       }
+
+//       final prefs = await SharedPreferences.getInstance();
+//       channelId ??= prefs.getString('agora_channel_id');
+//       token ??= prefs.getString('patient_agora_token');
+//       doctorName ??= prefs.getString('doctor_name') ?? 'Doctor';
+//       doctorPhoto ??= prefs.getString('doctor_photo') ?? '';
+
+//       if (channelId == null || token == null) return;
+
+//       Get.to(() => PatientCallScreen(
+//             channelId: channelId!,
+//             token: token!,
+//             doctorName: doctorName!,
+//             doctorPhoto: doctorPhoto!,
+//             autoAccept: autoAccept,
+//           ));
+//     } catch (e) {
+//       dLog('❌ CALL ERROR: $e');
+//     }
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// LOCALE
+//   /// ------------------------------------------------------------
+//   Future<void> _restoreLocale() async {
+//     final prefs = await SharedPreferences.getInstance();
+//     final saved = prefs.getString(languagePrefsKey) ?? 'en';
+//     Get.updateLocale(Locale(saved));
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GetMaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       theme: CustomTheme.lightTheme,
+//       locale: Get.locale,
+//       fallbackLocale: const Locale('en'),
+//       home: const SplashScreen(),
+//       getPages: [
+//         GetPage(
+//           name: '/appointment-overview',
+//           page: () => const AppointmentOverviewScreen(),
+//         ),
+//         GetPage(
+//           name: '/payment-gateway',
+//           page: () => const PaymentGatewayScreen(),
+//         ),
+//         GetPage(
+//           name: '/waiting-for-doctor',
+//           page: () => const WaitingForDoctorScreen(),
+//         ),
+//       ],
+//       localizationsDelegates: const [
+//         AppLocalizations.delegate,
+//         GlobalMaterialLocalizations.delegate,
+//         GlobalWidgetsLocalizations.delegate,
+//         GlobalCupertinoLocalizations.delegate,
+//       ],
+//       supportedLocales: AppLocalizations.supportedLocales,
+//     );
+//   }
+// }
+
+// ios setup ye sahi hey 
+
+// import 'dart:developer' as developer;
+// import 'dart:convert';
+// import 'dart:io';
+
+// import 'package:eye_buddy/features/reason_for_visit/view/appointment_overview_screen.dart';
+// import 'package:flutter/foundation.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_callkit_incoming/entities/call_event.dart';
+// import 'package:flutter_callkit_incoming/entities/call_kit_params.dart';
+// import 'package:get/get.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
+
+// import 'package:awesome_notifications/awesome_notifications.dart';
+
+// import 'package:eye_buddy/firebase_options.dart'
+//     if (dart.library.html) 'package:eye_buddy/firebase_options_web.dart';
+
+// import 'package:eye_buddy/features/agora_call/view/PatientAgoraCallScreen.dart';
+// import 'package:eye_buddy/core/services/utils/config/theme.dart';
+// import 'package:eye_buddy/core/services/utils/keys/shared_pref_keys.dart';
+// import 'package:eye_buddy/l10n/app_localizations.dart';
+
+// import 'package:flutter_localizations/flutter_localizations.dart';
+// import 'package:eye_buddy/features/splash/view/splash_screen.dart';
+
+// import 'package:eye_buddy/features/payment_gateway/view/payment_gateway_screen.dart';
+// import 'package:eye_buddy/features/waiting_for_doctor/view/waiting_for_doctor_screen.dart';
+
+// import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
+
+// void dLog(String msg) {
+//   if (kDebugMode) developer.log(msg);
+// }
+
+// /// ------------------------------------------------------------
+// /// SAFE PAYLOAD
+// /// ------------------------------------------------------------
+// Map<String, String> stringifyPayload(Map<String, dynamic> data) {
+//   return data.map((k, v) => MapEntry(k, v?.toString() ?? ''));
+// }
+
+// /// ------------------------------------------------------------
+// /// BACKGROUND / KILLED FCM
+// /// ------------------------------------------------------------
+// @pragma('vm:entry-point')
+// Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+//   await Firebase.initializeApp(
+//     options: DefaultFirebaseOptions.currentPlatform,
+//   );
+
+//   final meta = message.data['meta'];
+//   if (meta == null || !meta.toString().contains('Calling')) return;
+
+//   /// 🔴 ANDROID → AWESOME NOTIFICATION (UNCHANGED)
+//   if (Platform.isAndroid) {
+//     await AwesomeNotifications().createNotification(
+//       content: NotificationContent(
+//         id: 1001,
+//         channelKey: 'call_channel',
+//         title: 'Incoming Call',
+//         body: 'Doctor is calling you',
+//         category: NotificationCategory.Call,
+//         wakeUpScreen: true,
+//         fullScreenIntent: true,
+//         locked: true,
+//         payload: stringifyPayload(message.data),
+//       ),
+//       actionButtons: [
+//         NotificationActionButton(
+//           key: 'ACCEPT_CALL',
+//           label: 'Accept',
+//           color: Colors.green,
+//           autoDismissible: true,
+//         ),
+//         NotificationActionButton(
+//           key: 'DECLINE_CALL',
+//           label: 'Decline',
+//           color: Colors.red,
+//           isDangerousOption: true,
+//           autoDismissible: true,
+//           actionType: ActionType.SilentAction,
+//         ),
+//       ],
+//     );
+//   }
+
+//   /// 🍎 IOS → CALLKIT
+//   if (Platform.isIOS) {
+//     final metaJson = jsonDecode(message.data['meta']);
+//     final metaData = metaJson['metaData'];
+
+//     await FlutterCallkitIncoming.showCallkitIncoming(
+//       CallKitParams(
+//         id: metaData['_id'],
+//         nameCaller: metaData['doctor']['name'],
+//         handle: 'Doctor Call',
+//         type: 0,
+//         extra: stringifyPayload(message.data),
+//       ),
+//     );
+//   }
+// }
+
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   MobileAds.instance.initialize();
+
+//   await AwesomeNotifications().initialize(
+//     null,
+//     [
+//       NotificationChannel(
+//         channelKey: 'call_channel',
+//         channelName: 'Incoming Calls',
+//         channelDescription: 'Doctor calling notifications',
+//         importance: NotificationImportance.Max,
+//         playSound: true,
+//         enableVibration: true,
+//         locked: true,
+//       ),
+//     ],
+//   );
+
+//   await AwesomeNotifications().requestPermissionToSendNotifications();
+
+//   await Firebase.initializeApp(
+//     options: DefaultFirebaseOptions.currentPlatform,
+//   );
+
+//   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+//   runApp(const EyeBuddyApp());
+// }
+
+// /// ------------------------------------------------------------
+// /// APP
+// /// ------------------------------------------------------------
+// class EyeBuddyApp extends StatefulWidget {
+//   const EyeBuddyApp({super.key});
+
+//   @override
+//   State<EyeBuddyApp> createState() => _EyeBuddyAppState();
+// }
+
+// class _EyeBuddyAppState extends State<EyeBuddyApp> {
+//   @override
+//   void initState() {
+//     super.initState();
+
+//     _restoreLocale();
+//     _setupAwesomeListener();      // ANDROID
+//     _setupForegroundFCM();        // BOTH
+//     _setupTerminatedFCM();        // BOTH
+//     _handleKilledAwesomeAction(); // ANDROID
+//     _setupIOSCallKitListener();   // 🍎 IOS ONLY
+
+//     _ensureAndroidFullScreenIntentPermission(); // ANDROID ONLY
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// IOS CALLKIT LISTENER (ACCEPT / DECLINE)
+//   /// ------------------------------------------------------------
+//   void _setupIOSCallKitListener() {
+//     if (!Platform.isIOS) return;
+
+//     FlutterCallkitIncoming.onEvent.listen((event) {
+//       final eventName = event?.event;
+//       final extra = event?.body?['extra'];
+
+//       if (eventName == Event.actionCallAccept && extra != null) {
+//         _openCallFromPayload(
+//           Map<String, String>.from(extra),
+//           autoAccept: true,
+//         );
+//       }
+
+//       if (eventName == Event.actionCallDecline) {
+//         FlutterCallkitIncoming.endAllCalls();
+//       }
+//     });
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// ANDROID 14 FULL SCREEN INTENT PERMISSION
+//   /// ------------------------------------------------------------
+//   Future<void> _ensureAndroidFullScreenIntentPermission() async {
+//     if (!Platform.isAndroid) return;
+
+//     try {
+//       final can = await FlutterCallkitIncoming.canUseFullScreenIntent();
+//       final canUse = (can is bool) ? can : true;
+
+//       if (!canUse) {
+//         await FlutterCallkitIncoming.requestFullIntentPermission();
+//       }
+//     } catch (_) {}
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// AWESOME ACTION LISTENER (ANDROID)
+//   /// ------------------------------------------------------------
+//   void _setupAwesomeListener() {
+//     AwesomeNotifications().setListeners(
+//       onActionReceivedMethod: (action) async {
+//         final payload = action.payload ?? {};
+
+//         if (action.buttonKeyPressed == 'DECLINE_CALL') {
+//           await AwesomeNotifications().cancel(action.id!);
+//           return;
+//         }
+
+//         if (action.buttonKeyPressed == 'ACCEPT_CALL' ||
+//             action.buttonKeyPressed.isEmpty) {
+//           await AwesomeNotifications().cancel(action.id!);
+
+//           WidgetsBinding.instance.addPostFrameCallback((_) {
+//             _openCallFromPayload(
+//               payload.map((k, v) => MapEntry(k, v.toString())),
+//               autoAccept: action.buttonKeyPressed == 'ACCEPT_CALL',
+//             );
+//           });
+//         }
+//       },
+//     );
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// FOREGROUND FCM
+//   /// ------------------------------------------------------------
+//   void _setupForegroundFCM() {
+//     FirebaseMessaging.onMessage.listen((message) async {
+//       final meta = message.data['meta'];
+//       if (meta == null || !meta.toString().contains('Calling')) return;
+
+//       /// 🍎 IOS → CALLKIT
+//       if (Platform.isIOS) {
+//         final metaJson = jsonDecode(message.data['meta']);
+//         final metaData = metaJson['metaData'];
+
+//         await FlutterCallkitIncoming.showCallkitIncoming(
+//           CallKitParams(
+//             id: metaData['_id'],
+//             nameCaller: metaData['doctor']['name'],
+//             handle: 'Doctor Call',
+//             type: 0,
+//             extra: stringifyPayload(message.data),
+//           ),
+//         );
+//         return;
+//       }
+
+//       /// 🔴 ANDROID → EXISTING FLOW
+//       _openCallFromPayload(stringifyPayload(message.data));
+
+//       await AwesomeNotifications().createNotification(
+//         content: NotificationContent(
+//           id: 1002,
+//           channelKey: 'call_channel',
+//           title: 'Incoming Call',
+//           body: 'Doctor is calling you',
+//           category: NotificationCategory.Call,
+//           payload: stringifyPayload(message.data),
+//         ),
+//       );
+//     });
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// TERMINATED (FCM TAP)
+//   /// ------------------------------------------------------------
+//   void _setupTerminatedFCM() async {
+//     final message = await FirebaseMessaging.instance.getInitialMessage();
+//     if (message == null) return;
+
+//     final meta = message.data['meta'] ?? '';
+//     if (!meta.toString().contains('Calling')) return;
+
+//     /// ❌ ANDROID: NO AUTO OPEN (AS YOU WANTED)
+//     if (Platform.isAndroid) return;
+
+//     /// 🍎 IOS
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _openCallFromPayload(stringifyPayload(message.data));
+//     });
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// TERMINATED (AWESOME BUTTON) ANDROID
+//   /// ------------------------------------------------------------
+//   void _handleKilledAwesomeAction() async {
+//     final action =
+//         await AwesomeNotifications().getInitialNotificationAction(
+//       removeFromActionEvents: true,
+//     );
+
+//     if (action == null) return;
+//     if (action.buttonKeyPressed == 'DECLINE_CALL') return;
+
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _openCallFromPayload(
+//         action.payload!.map((k, v) => MapEntry(k, v.toString())),
+//         autoAccept: action.buttonKeyPressed == 'ACCEPT_CALL',
+//       );
+//     });
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// OPEN CALL (COMMON)
+//   /// ------------------------------------------------------------
+//   Future<void> _openCallFromPayload(
+//     Map<String, String> payload, {
+//     bool autoAccept = false,
+//   }) async {
+//     try {
+//       String? channelId;
+//       String? token;
+//       String? doctorName;
+//       String? doctorPhoto;
+
+//       if (payload['meta'] != null && payload['meta']!.isNotEmpty) {
+//         final meta = jsonDecode(payload['meta']!);
+//         final metaData = meta['metaData'];
+
+//         channelId = metaData['_id'];
+//         token = metaData['patientAgoraToken'];
+
+//         final doctor = metaData['doctor'];
+//         doctorName = doctor?['name'];
+//         doctorPhoto = doctor?['photo'];
+//       }
+
+//       final prefs = await SharedPreferences.getInstance();
+//       channelId ??= prefs.getString('agora_channel_id');
+//       token ??= prefs.getString('patient_agora_token');
+//       doctorName ??= prefs.getString('doctor_name') ?? 'Doctor';
+//       doctorPhoto ??= prefs.getString('doctor_photo') ?? '';
+
+//       if (channelId == null || token == null) return;
+
+//       Get.to(() => PatientCallScreen(
+//             channelId: channelId!,
+//             token: token!,
+//             doctorName: doctorName!,
+//             doctorPhoto: doctorPhoto!,
+//             autoAccept: autoAccept,
+//           ));
+//     } catch (e) {
+//       dLog('❌ CALL ERROR: $e');
+//     }
+//   }
+
+//   /// ------------------------------------------------------------
+//   /// LOCALE
+//   /// ------------------------------------------------------------
+//   Future<void> _restoreLocale() async {
+//     final prefs = await SharedPreferences.getInstance();
+//     final saved = prefs.getString(languagePrefsKey) ?? 'en';
+//     Get.updateLocale(Locale(saved));
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GetMaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       theme: CustomTheme.lightTheme,
+//       locale: Get.locale,
+//       fallbackLocale: const Locale('en'),
+//       home: const SplashScreen(),
+//       getPages: [
+//         GetPage(
+//           name: '/appointment-overview',
+//           page: () => const AppointmentOverviewScreen(),
+//         ),
+//         GetPage(
+//           name: '/payment-gateway',
+//           page: () => const PaymentGatewayScreen(),
+//         ),
+//         GetPage(
+//           name: '/waiting-for-doctor',
+//           page: () => const WaitingForDoctorScreen(),
+//         ),
+//       ],
+//       localizationsDelegates: const [
+//         AppLocalizations.delegate,
+//         GlobalMaterialLocalizations.delegate,
+//         GlobalWidgetsLocalizations.delegate,
+//         GlobalCupertinoLocalizations.delegate,
+//       ],
+//       supportedLocales: AppLocalizations.supportedLocales,
+//     );
+//   }
+// }
+
+
+
+
+// new
+
+ import 'dart:developer' as developer;
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:eye_buddy/features/reason_for_visit/view/appointment_overview_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_callkit_incoming/entities/call_event.dart';
+import 'package:flutter_callkit_incoming/entities/call_kit_params.dart';
 import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -3444,6 +4193,8 @@ import 'package:eye_buddy/features/splash/view/splash_screen.dart';
 
 import 'package:eye_buddy/features/payment_gateway/view/payment_gateway_screen.dart';
 import 'package:eye_buddy/features/waiting_for_doctor/view/waiting_for_doctor_screen.dart';
+
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 
 void dLog(String msg) {
   if (kDebugMode) developer.log(msg);
@@ -3468,40 +4219,58 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final meta = message.data['meta'];
   if (meta == null || !meta.toString().contains('Calling')) return;
 
-  await AwesomeNotifications().createNotification(
-    content: NotificationContent(
-      id: 1001,
-      channelKey: 'call_channel',
-      title: 'Incoming Call',
-      body: 'Doctor is calling you',
-      category: NotificationCategory.Call,
-      wakeUpScreen: true,
-      fullScreenIntent: true,
-      locked: true,
-      payload: stringifyPayload(message.data),
-    ),
-    actionButtons: [
-      NotificationActionButton(
-        key: 'ACCEPT_CALL',
-        label: 'Accept',
-        color: Colors.green,
-        autoDismissible: true,
+  /// 🔴 ANDROID → AWESOME NOTIFICATION (UNCHANGED)
+  if (Platform.isAndroid) {
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: 1001,
+        channelKey: 'call_channel',
+        title: 'Incoming Call',
+        body: 'Doctor is calling you',
+        category: NotificationCategory.Call,
+        wakeUpScreen: true,
+        fullScreenIntent: true,
+        locked: true,
+        payload: stringifyPayload(message.data),
       ),
-      NotificationActionButton(
-        key: 'DECLINE_CALL',
-        label: 'Decline',
-        color: Colors.red,
-        isDangerousOption: true,
-        autoDismissible: true,
-        actionType: ActionType.SilentAction,
+      actionButtons: [
+        NotificationActionButton(
+          key: 'ACCEPT_CALL',
+          label: 'Accept',
+          color: Colors.green,
+          autoDismissible: true,
+        ),
+        NotificationActionButton(
+          key: 'DECLINE_CALL',
+          label: 'Decline',
+          color: Colors.red,
+          isDangerousOption: true,
+          autoDismissible: true,
+          actionType: ActionType.SilentAction,
+        ),
+      ],
+    );
+  }
+
+  /// 🍎 IOS → CALLKIT
+  if (Platform.isIOS) {
+    final metaJson = jsonDecode(message.data['meta']);
+    final metaData = metaJson['metaData'];
+
+    await FlutterCallkitIncoming.showCallkitIncoming(
+      CallKitParams(
+        id: metaData['_id'],
+        nameCaller: metaData['doctor']['name'],
+        handle: 'Doctor Call',
+        type: 0,
+        extra: stringifyPayload(message.data),
       ),
-    ],
-  );
+    );
+  }
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-    WidgetsFlutterBinding.ensureInitialized();
   MobileAds.instance.initialize();
 
   await AwesomeNotifications().initialize(
@@ -3544,15 +4313,62 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
   @override
   void initState() {
     super.initState();
+
     _restoreLocale();
-    _setupAwesomeListener();
-    _setupForegroundFCM();
-    _setupTerminatedFCM();
-    _handleKilledAwesomeAction();
+    _setupAwesomeListener();      // ANDROID
+    _setupForegroundFCM();        // BOTH
+    _setupTerminatedFCM();        // BOTH
+    _handleKilledAwesomeAction(); // ANDROID
+    _setupIOSCallKitListener();   // 🍎 IOS ONLY
+
+ if (Platform.isIOS) {
+    _setupIOSApnsToken();   
+    _setupIOSVoipToken();   
+  }
+    _ensureAndroidFullScreenIntentPermission(); // ANDROID ONLY
   }
 
   /// ------------------------------------------------------------
-  /// AWESOME ACTION LISTENER
+  /// IOS CALLKIT LISTENER (ACCEPT / DECLINE)
+  /// ------------------------------------------------------------
+  void _setupIOSCallKitListener() {
+    if (!Platform.isIOS) return;
+
+    FlutterCallkitIncoming.onEvent.listen((event) {
+      final eventName = event?.event;
+      final extra = event?.body?['extra'];
+
+      if (eventName == Event.actionCallAccept && extra != null) {
+        _openCallFromPayload(
+          Map<String, String>.from(extra),
+          autoAccept: true,
+        );
+      }
+
+      if (eventName == Event.actionCallDecline) {
+        FlutterCallkitIncoming.endAllCalls();
+      }
+    });
+  }
+
+  /// ------------------------------------------------------------
+  /// ANDROID 14 FULL SCREEN INTENT PERMISSION
+  /// ------------------------------------------------------------
+  Future<void> _ensureAndroidFullScreenIntentPermission() async {
+    if (!Platform.isAndroid) return;
+
+    try {
+      final can = await FlutterCallkitIncoming.canUseFullScreenIntent();
+      final canUse = (can is bool) ? can : true;
+
+      if (!canUse) {
+        await FlutterCallkitIncoming.requestFullIntentPermission();
+      }
+    } catch (_) {}
+  }
+
+  /// ------------------------------------------------------------
+  /// AWESOME ACTION LISTENER (ANDROID)
   /// ------------------------------------------------------------
   void _setupAwesomeListener() {
     AwesomeNotifications().setListeners(
@@ -3580,13 +4396,31 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
   }
 
   /// ------------------------------------------------------------
-  /// FOREGROUND CALL
+  /// FOREGROUND FCM
   /// ------------------------------------------------------------
   void _setupForegroundFCM() {
     FirebaseMessaging.onMessage.listen((message) async {
       final meta = message.data['meta'];
       if (meta == null || !meta.toString().contains('Calling')) return;
 
+      /// 🍎 IOS → CALLKIT
+      if (Platform.isIOS) {
+        final metaJson = jsonDecode(message.data['meta']);
+        final metaData = metaJson['metaData'];
+
+        await FlutterCallkitIncoming.showCallkitIncoming(
+          CallKitParams(
+            id: metaData['_id'],
+            nameCaller: metaData['doctor']['name'],
+            handle: 'Doctor Call',
+            type: 0,
+            extra: stringifyPayload(message.data),
+          ),
+        );
+        return;
+      }
+
+      /// 🔴 ANDROID → EXISTING FLOW
       _openCallFromPayload(stringifyPayload(message.data));
 
       await AwesomeNotifications().createNotification(
@@ -3603,24 +4437,26 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
   }
 
   /// ------------------------------------------------------------
-  /// TERMINATED (FCM TAP) ✅ FIXED
+  /// TERMINATED (FCM TAP)
   /// ------------------------------------------------------------
   void _setupTerminatedFCM() async {
-    final message =
-        await FirebaseMessaging.instance.getInitialMessage();
-
+    final message = await FirebaseMessaging.instance.getInitialMessage();
     if (message == null) return;
 
     final meta = message.data['meta'] ?? '';
     if (!meta.toString().contains('Calling')) return;
 
+    /// ❌ ANDROID: NO AUTO OPEN (AS YOU WANTED)
+    if (Platform.isAndroid) return;
+
+    /// 🍎 IOS
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _openCallFromPayload(stringifyPayload(message.data));
     });
   }
 
   /// ------------------------------------------------------------
-  /// TERMINATED (AWESOME BUTTON)
+  /// TERMINATED (AWESOME BUTTON) ANDROID
   /// ------------------------------------------------------------
   void _handleKilledAwesomeAction() async {
     final action =
@@ -3629,7 +4465,6 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
     );
 
     if (action == null) return;
-
     if (action.buttonKeyPressed == 'DECLINE_CALL') return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -3640,8 +4475,51 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
     });
   }
 
+Future<void> _setupIOSApnsToken() async {
+  if (!Platform.isIOS) return;
+
+  try {
+    final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+    if (apnsToken != null && apnsToken.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('ios_apns_token', apnsToken);
+
+      dLog('🍎 APNS TOKEN: $apnsToken');
+
+      // 🔥 BACKEND KO BHEJNA HOGA
+      // api.updateApnsToken(apnsToken);
+    }
+  } catch (e) {
+    dLog('❌ APNS TOKEN ERROR: $e');
+  }
+}
+
+Future<void> _setupIOSVoipToken() async {
+  if (!Platform.isIOS) return;
+
+  try {
+    final voipToken =
+        await FlutterCallkitIncoming.getDevicePushTokenVoIP();
+
+    if (voipToken != null && voipToken.toString().isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        'ios_voip_token',
+        voipToken.toString(),
+      );
+
+      dLog('📞 IOS VOIP TOKEN: $voipToken');
+
+      // 🔥 BACKEND KO YE TOKEN BHEJNA ZAROORI HAI
+      // api.updateVoipToken(voipToken);
+    }
+  } catch (e) {
+    dLog('❌ VOIP TOKEN ERROR: $e');
+  }
+}
+
   /// ------------------------------------------------------------
-  /// OPEN CALL
+  /// OPEN CALL (COMMON)
   /// ------------------------------------------------------------
   Future<void> _openCallFromPayload(
     Map<String, String> payload, {
