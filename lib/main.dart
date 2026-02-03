@@ -4492,6 +4492,48 @@ Future<void> main() async {
   debugPrint('🟢 main(): runApp called successfully');
 }
 
+/// ================= CALLKIT ACCEPT HANDLER =================
+void _handleCallKitAccept(Map<String, dynamic>? body) async {
+  try {
+    dLog('🔗 CALLKIT: Connecting call...');
+
+    // Extract appointment ID from CallKit body
+    String appointmentId = '';
+    if (body != null) {
+      appointmentId =
+          (body['extra']?['appointmentId'] ?? body['id'] ?? body['uuid'] ?? '')
+              .toString();
+    }
+
+    if (appointmentId.isEmpty) {
+      dLog('❌ CALLKIT: No appointment ID found');
+      return;
+    }
+
+    dLog('📞 CALLKIT: Connecting to appointment: $appointmentId');
+
+    // Navigate to existing call screen using EyeBuddyApp instance
+    if (Get.context != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Find the app state and call the existing method
+        final appState = Get.context
+            ?.findAncestorStateOfType<_EyeBuddyAppState>();
+        appState?._openCallFromPayload({
+          'meta': jsonEncode({
+            'metaData': {
+              '_id': appointmentId,
+              'patientAgoraToken': '', // Will be fetched from prefs
+              'doctor': {'name': 'Doctor'},
+            },
+          }),
+        }, autoAccept: true);
+      });
+    }
+  } catch (e) {
+    dLog('❌ CALLKIT: Accept error - $e');
+  }
+}
+
 /// ================= CALLKIT LISTENER =================
 void _setupCallKitListener() {
   if (!Platform.isIOS) return;
@@ -4508,7 +4550,7 @@ void _setupCallKitListener() {
     // Handle accept
     if (eventName.contains('actionCallAccept')) {
       dLog('✅ CALLKIT: Call accepted');
-      // Navigate to call screen or accept logic here
+      _handleCallKitAccept(body);
     }
 
     // Handle decline
