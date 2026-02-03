@@ -2337,9 +2337,6 @@
 //   }
 // // }
 
-
-
-
 // import 'dart:developer' as developer;
 // import 'dart:convert';
 
@@ -2585,7 +2582,6 @@
 //     );
 //   }
 // }
-
 
 // import 'dart:developer' as developer;
 // import 'dart:convert';
@@ -2841,9 +2837,6 @@
 //   }
 // }
 
-
-
-
 // import 'dart:developer' as developer;
 // import 'dart:convert';
 
@@ -2976,7 +2969,6 @@
 //     _setupTerminatedFCM();
 //   }
 
-
 // void _setupAwesomeListener() {
 //   AwesomeNotifications().setListeners(
 //     onActionReceivedMethod: (action) async {
@@ -3073,8 +3065,8 @@
 //     if (channelId == null || token == null) return;
 
 // Get.to(() => PatientCallScreen(
-//       channelId: channelId!,          
-//       token: token!,                 
+//       channelId: channelId!,
+//       token: token!,
 //       doctorName: doctorName ?? 'Doctor',
 //       doctorPhoto: doctorPhoto ?? '',
 // ));
@@ -3124,7 +3116,7 @@
 //     );
 //   }
 // }
-  
+
 // working main hey
 
 //   import 'dart:developer' as developer;
@@ -3259,7 +3251,6 @@
 //     _setupTerminatedFCM();
 //   }
 
-
 // void _setupAwesomeListener() {
 //   AwesomeNotifications().setListeners(
 //     onActionReceivedMethod: (action) async {
@@ -3325,8 +3316,6 @@
 //   }
 // }
 
-
-  
 //  /// ------------------------------------------------------------
 // /// OPEN CALL (UPDATED)
 // /// ------------------------------------------------------------
@@ -3372,7 +3361,6 @@
 //   }
 // }
 
-
 //   /// ------------------------------------------------------------
 //   /// LOCALE
 //   /// ------------------------------------------------------------
@@ -3415,12 +3403,9 @@
 //   }
 // }
 
-
 // onlyandoride
 
-
-
-// ios setup ye sahi hey 
+// ios setup ye sahi hey
 
 // import 'dart:developer' as developer;
 // import 'dart:convert';
@@ -3818,12 +3803,6 @@
 //   }
 // }
 
-
-
-
-
-
-
 // ===== IMPORTS SAME AS YOUR FIRST FILE + SOCKET =====
 
 // import 'dart:async';
@@ -3852,7 +3831,6 @@
 // import 'package:eye_buddy/core/services/utils/config/theme.dart';
 // import 'package:eye_buddy/core/services/utils/keys/shared_pref_keys.dart';
 // import 'package:eye_buddy/l10n/app_localizations.dart';
-
 
 // import 'package:flutter_localizations/flutter_localizations.dart';
 // import 'package:eye_buddy/features/splash/view/splash_screen.dart';
@@ -3946,7 +3924,6 @@
 //     dLog("📄 BG reject stack: $s");
 //   }
 // }
-
 
 // /// ================= BACKGROUND FCM =================
 // @pragma('vm:entry-point')
@@ -4058,7 +4035,6 @@
 
 //   debugPrint('🟢 main(): runApp called successfully');
 // }
-
 
 // /// ================= APP =================
 // class EyeBuddyApp extends StatefulWidget {
@@ -4300,9 +4276,6 @@
 //   }
 // }
 
-
-
-
 // crashfixeyestes
 import 'dart:async';
 import 'dart:developer' as developer;
@@ -4425,9 +4398,7 @@ Future<void> backgroundRejectCall(String appointmentId) async {
 /// ================= BACKGROUND FCM =================
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   if (message.data['type'] == "CALL_CANCELLED") {
     await AwesomeNotifications().cancelAll();
@@ -4481,18 +4452,15 @@ Future<void> main() async {
 
   // Awesome Notifications
   try {
-    await AwesomeNotifications().initialize(
-      null,
-      [
-        NotificationChannel(
-          channelKey: 'call_channel',
-          channelName: 'Incoming Calls',
-          importance: NotificationImportance.Max,
-          locked: true,
-          channelDescription: 'Doctor calling notifications',
-        ),
-      ],
-    );
+    await AwesomeNotifications().initialize(null, [
+      NotificationChannel(
+        channelKey: 'call_channel',
+        channelName: 'Incoming Calls',
+        importance: NotificationImportance.Max,
+        locked: true,
+        channelDescription: 'Doctor calling notifications',
+      ),
+    ]);
     debugPrint('🟢 main(): AwesomeNotifications initialized');
   } catch (e) {
     debugPrint('🔴 main(): AwesomeNotifications init failed → $e');
@@ -4510,9 +4478,7 @@ Future<void> main() async {
 
   // FCM background handler
   try {
-    FirebaseMessaging.onBackgroundMessage(
-      firebaseMessagingBackgroundHandler,
-    );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     debugPrint('🟢 main(): Firebase background handler registered');
   } catch (e) {
     debugPrint('🔴 main(): FCM background handler failed → $e');
@@ -4521,13 +4487,45 @@ Future<void> main() async {
   debugPrint('🟡 main(): Starting app with DisplayMetrics');
 
   // ✅ Proper DisplayMetrics integration
-  runApp(
-    DisplayMetricsWidget(
-      child: const EyeBuddyApp(),
-    ),
-  );
+  runApp(DisplayMetricsWidget(child: const EyeBuddyApp()));
 
   debugPrint('🟢 main(): runApp called successfully');
+}
+
+/// ================= CALLKIT LISTENER =================
+void _setupCallKitListener() {
+  if (!Platform.isIOS) return;
+
+  FlutterCallkitIncoming.onEvent.listen((event) {
+    if (event == null) return;
+
+    final eventName = event.event.toString();
+    final body = event.body;
+
+    dLog('📱 CALLKIT EVENT: $eventName');
+    dLog('📱 CALLKIT BODY: $body');
+
+    // Handle accept
+    if (eventName.contains('actionCallAccept')) {
+      dLog('✅ CALLKIT: Call accepted');
+      // Navigate to call screen or accept logic here
+    }
+
+    // Handle decline
+    if (eventName.contains('actionCallDecline')) {
+      dLog('❌ CALLKIT: Call declined');
+      // Reject call logic here
+    }
+
+    // Handle end
+    if (eventName.contains('actionCallEnded') ||
+        eventName.contains('actionCallTimeout')) {
+      dLog('🔚 CALLKIT: Call ended');
+      // End call logic here
+    }
+  });
+
+  dLog('📱 CALLKIT: Listener setup complete');
 }
 
 /// ================= APP =================
@@ -4547,6 +4545,7 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
     _setupAwesomeListener();
     _setupForegroundFCM();
     _setupTerminatedFCM();
+    _setupCallKitListener();
     _handleKilledAwesomeAction();
     _ensureAndroidFullScreenIntentPermission();
 
@@ -4711,13 +4710,15 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
 
       if (channelId == null || token == null) return;
 
-      Get.to(() => PatientCallScreen(
-            channelId: channelId!,
-            token: token!,
-            doctorName: doctorName!,
-            doctorPhoto: doctorPhoto!,
-            autoAccept: autoAccept,
-          ));
+      Get.to(
+        () => PatientCallScreen(
+          channelId: channelId!,
+          token: token!,
+          doctorName: doctorName!,
+          doctorPhoto: doctorPhoto!,
+          autoAccept: autoAccept,
+        ),
+      );
     } catch (e) {
       dLog('CALL OPEN ERROR $e');
     }

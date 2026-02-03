@@ -141,14 +141,7 @@ override func application(
     NSLog("PushKit: CallKit showCallkitIncoming invoked id=\(args["id"] ?? "")")
   }
 
-  func pushRegistry(
-    _ registry: PKPushRegistry,
-    didReceiveIncomingPushWith payload: PKPushPayload,
-    for type: PKPushType
-  ) {
-    pushRegistry(registry, didReceiveIncomingPushWith: payload, for: type) {}
-  }
-
+  
   private func _extractCallkitArgs(from raw: [AnyHashable: Any]) -> [String: Any] {
     func toStringKeyed(_ any: Any) -> [String: Any]? {
       if let dict = any as? [String: Any] { return dict }
@@ -167,7 +160,7 @@ override func application(
     let nested =
       toStringKeyed(root["data"] as Any) ??
       toStringKeyed(root["callkit"] as Any) ??
-      root
+      root  // ✅ Check root directly for direct fields
 
     var args = nested
 
