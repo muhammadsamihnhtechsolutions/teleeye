@@ -4315,6 +4315,23 @@ import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 import 'package:eye_buddy/features/eye_test/controller/eye_test_controller.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:eye_buddy/core/services/utils/keys/token_keys.dart';
+import 'dart:convert';
+
+/// Helper to extract the actual appointment map from your nested meta string ONLY FOR IOS
+Map<String, dynamic> _getAppointmentData(Map<String, dynamic>? body) {
+  try {
+    if (body == null || body['extra'] == null) return {};
+
+    // In your new object, the data is a JSON string inside 'meta'
+    final String? metaString = body['extra']['meta'];
+    if (metaString != null && metaString.isNotEmpty) {
+      return jsonDecode(metaString);
+    }
+  } catch (e) {
+    dLog('❌ Error parsing meta JSON: $e');
+  }
+  return {};
+}
 
 void dLog(String msg) {
   if (kDebugMode) developer.log(msg);
@@ -4570,6 +4587,216 @@ Future<void> main() async {
   debugPrint('🟢 main(): runApp called successfully');
 }
 
+// /// ================= CALLKIT DECLINE HANDLER =================
+// void _handleCallKitDecline(Map<String, dynamic>? body) async {
+//   try {
+//     dLog('🚫 CALLKIT: Declining call...');
+
+//     // Extract appointment ID from CallKit body
+//     String appointmentId = '';
+//     if (body != null) {
+//       appointmentId =
+//           (body['extra']?['appointmentId'] ?? body['id'] ?? body['uuid'] ?? '')
+//               .toString();
+//     }
+
+//     if (appointmentId.isNotEmpty) {
+//       dLog('📞 CALLKIT: Rejecting appointment: $appointmentId');
+//       await backgroundRejectCall(appointmentId);
+//     }
+
+//     // Clear any pending call UI
+//     await AwesomeNotifications().cancelAll();
+//   } catch (e) {
+//     dLog('❌ CALLKIT: Decline error - $e');
+//   }
+// }
+
+// /// ================= CALLKIT END HANDLER =================
+// void _handleCallKitEnd(Map<String, dynamic>? body) async {
+//   try {
+//     dLog('🔚 CALLKIT: Ending call...');
+
+//     // Clear any notifications
+//     await AwesomeNotifications().cancelAll();
+
+//     // Clear call state from prefs
+//     final prefs = await SharedPreferences.getInstance();
+//     await prefs.setBool('isCallAccepted', false);
+//     await prefs.setBool('pendingIncomingCallOpen', false);
+
+//     dLog('✅ CALLKIT: Call ended successfully');
+//   } catch (e) {
+//     dLog('❌ CALLKIT: End error - $e');
+//   }
+// }
+
+// /// ================= CALLKIT ACCEPT HANDLER =================
+// void _handleCallKitAccept(Map<String, dynamic>? body) async {
+//   try {
+//     dLog('🔗 CALLKIT: Connecting call...');
+
+//     // Extract appointment ID from CallKit body
+//     String appointmentId = '';
+//     if (body != null) {
+//       appointmentId =
+//           (body['extra']?['appointmentId'] ?? body['id'] ?? body['uuid'] ?? '')
+//               .toString();
+//     }
+
+//     if (appointmentId.isEmpty) {
+//       dLog('❌ CALLKIT: No appointment ID found');
+//       return;
+//     }
+
+//     dLog('📞 CALLKIT: Connecting to appointment: $appointmentId');
+
+//     // Fetch token from SharedPreferences
+//     final prefs = await SharedPreferences.getInstance();
+//     final token = prefs.getString('patient_agora_token');
+//     final channelId = prefs.getString('agora_channel_id');
+
+//     dLog(
+//       '🔑 CALLKIT: Token found: ${token?.isNotEmpty == true ? "YES" : "NO"}',
+//     );
+//     dLog(
+//       '📺 CALLKIT: Channel found: ${channelId?.isNotEmpty == true ? "YES" : "NO"}',
+//     );
+
+//     // Navigate to existing call screen using EyeBuddyApp instance
+//     if (Get.context != null) {
+//       WidgetsBinding.instance.addPostFrameCallback((_) {
+//         // Find the app state and call the existing method
+//         final appState = Get.context
+//             ?.findAncestorStateOfType<_EyeBuddyAppState>();
+//         appState?._openCallFromPayload({
+//           'meta': jsonEncode({
+//             'metaData': {
+//               '_id': appointmentId,
+//               'patientAgoraToken': token ?? '',
+//               'doctor': {'name': 'Doctor'},
+//             },
+//           }),
+//         }, autoAccept: true);
+//       });
+//     }
+//   } catch (e) {
+//     dLog('❌ CALLKIT: Accept error - $e');
+//   }
+// }
+
+void _handleCallKitDecline(Map<String, dynamic>? body) async {
+  try {
+    dLog('🚫 CALLKIT: Declining call...');
+
+    final appointmentData = _getAppointmentData(body);
+    // Use the real database _id from the parsed meta
+    final String appointmentId = (appointmentData['_id'] ?? '').toString();
+
+    if (appointmentId.isNotEmpty) {
+      dLog('📞 CALLKIT: Rejecting appointment: $appointmentId');
+      await backgroundRejectCall(appointmentId);
+    }
+
+    await AwesomeNotifications().cancelAll();
+  } catch (e) {
+    dLog('❌ CALLKIT: Decline error - $e');
+  }
+}
+
+void _handleCallKitAccept(Map<String, dynamic>? body) async {
+  try {
+    dLog('🔗 CALLKIT: Connecting call...');
+
+    final appointmentData = _getAppointmentData(body);
+
+    // Extracting real values directly from the parsed meta object
+    final String appointmentId = (appointmentData['_id'] ?? '').toString();
+    final String token = (appointmentData['patientAgoraToken'] ?? '')
+        .toString();
+    final String doctorName = (appointmentData['doctor']?['name'] ?? 'Doctor')
+        .toString();
+    final String doctorPhoto = (appointmentData['doctor']?['photo'] ?? '')
+        .toString();
+
+    if (appointmentId.isEmpty) {
+      dLog('❌ CALLKIT: No appointment ID found in meta');
+      return;
+    }
+
+    dLog('📞 CALLKIT: Data extracted from Meta for ID: $appointmentId');
+
+    if (Get.context != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final appState = Get.context
+            ?.findAncestorStateOfType<_EyeBuddyAppState>();
+
+        // We pass the data exactly how your _openCallFromPayload expects it
+        appState?._openCallFromPayload({
+          'meta': jsonEncode({
+            'metaData': {
+              '_id': appointmentId,
+              'patientAgoraToken': token,
+              'doctor': {'name': doctorName, 'photo': doctorPhoto},
+            },
+          }),
+        }, autoAccept: true);
+      });
+    }
+  } catch (e) {
+    dLog('❌ CALLKIT: Accept error - $e');
+  }
+}
+
+void _handleCallKitEnd(Map<String, dynamic>? body) async {
+  try {
+    dLog('🔚 CALLKIT: Ending call...');
+    await AwesomeNotifications().cancelAll();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isCallAccepted', false);
+    await prefs.setBool('pendingIncomingCallOpen', false);
+  } catch (e) {
+    dLog('❌ CALLKIT: End error - $e');
+  }
+}
+
+/// ================= CALLKIT LISTENER =================
+void _setupCallKitListener() {
+  if (!Platform.isIOS) return;
+
+  FlutterCallkitIncoming.onEvent.listen((event) {
+    if (event == null) return;
+
+    final eventName = event.event.toString();
+    final body = event.body;
+
+    dLog('📱 CALLKIT EVENT: $eventName');
+    dLog('📱 CALLKIT BODY: $body');
+
+    // Handle accept
+    if (eventName.contains('actionCallAccept')) {
+      dLog('✅ CALLKIT: Call accepted');
+      _handleCallKitAccept(body);
+    }
+
+    // Handle decline
+    if (eventName.contains('actionCallDecline')) {
+      dLog('❌ CALLKIT: Call declined');
+      _handleCallKitDecline(body);
+    }
+
+    // Handle end
+    if (eventName.contains('actionCallEnded') ||
+        eventName.contains('actionCallTimeout')) {
+      dLog('🔚 CALLKIT: Call ended');
+      _handleCallKitEnd(body);
+    }
+  });
+
+  dLog('📱 CALLKIT: Listener setup complete');
+}
+
 /// ================= APP =================
 class EyeBuddyApp extends StatefulWidget {
   const EyeBuddyApp({super.key});
@@ -4587,6 +4814,7 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
     _setupAwesomeListener();
     _setupForegroundFCM();
     _setupTerminatedFCM();
+    _setupCallKitListener();
     _handleKilledAwesomeAction();
     _ensureAndroidFullScreenIntentPermission();
 
@@ -4685,8 +4913,9 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
           ),
         ],
       );
-
-      _openCallFromPayload(stringifyPayload(message.data));
+      if (Platform.isAndroid) {
+        _openCallFromPayload(stringifyPayload(message.data));
+      }
     });
   }
 

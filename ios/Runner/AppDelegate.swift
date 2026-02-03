@@ -149,89 +149,80 @@ override func application(
     pushRegistry(registry, didReceiveIncomingPushWith: payload, for: type) {}
   }
 
-  private func _extractCallkitArgs(from raw: [AnyHashable: Any]) -> [String: Any] {
+private func _extractCallkitArgs(from raw: [AnyHashable: Any]) -> [String: Any] {
     func toStringKeyed(_ any: Any) -> [String: Any]? {
-      if let dict = any as? [String: Any] { return dict }
-      if let dict = any as? [AnyHashable: Any] {
-        var out: [String: Any] = [:]
-        for (k, v) in dict {
-          if let ks = k as? String { out[ks] = v }
+        if let dict = any as? [String: Any] { return dict }
+        if let dict = any as? [AnyHashable: Any] {
+            var out: [String: Any] = [:]
+            for (k, v) in dict {
+                if let ks = k as? String { out[ks] = v }
+            }
+            return out
         }
-        return out
-      }
-      return nil
+        return nil
     }
 
-    // Many backends wrap custom data under `data` or `callkit`.
     let root = toStringKeyed(raw) ?? [:]
-    let nested =
-      toStringKeyed(root["data"] as Any) ??
-      toStringKeyed(root["callkit"] as Any) ??
-      root
-
-    var args = nested
-
-    // Normalize common key variants to plugin expected keys.
-    if args["id"] == nil, let uuid = args["uuid"] as? String {
-      args["id"] = uuid
+    
+    // 1. Check if "meta" exists and decode the JSON string
+    var appointmentData: [String: Any] = [:]
+    if let metaString = root["meta"] as? String,
+       let data = metaString.data(using: .utf8) {
+        do {
+            if let decoded = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                appointmentData = decoded
+            }
+        } catch {
+            print("Error decoding meta JSON: \(error)")
+        }
+    } else {
+        // Fallback to existing logic if meta isn't a string
+        appointmentData = toStringKeyed(root["data"] as Any) ?? root
     }
+
+    var args = appointmentData
+    print("Decoded Call Data:", args)
+
+    // 2. Normalize ID (Handle Mongo _id or appointmentId)
     if args["id"] == nil {
-      if let appointmentId = args["appointmentId"] as? String {
-        args["id"] = appointmentId
-      } else if let appointmentId = args["_id"] as? String {
-        args["id"] = appointmentId
-      } else if let callId = args["callId"] as? String {
-        args["id"] = callId
-      }
-    }
-    if args["nameCaller"] == nil, let name = args["name"] as? String {
-      args["nameCaller"] = name
-    }
-    if args["nameCaller"] == nil {
-      if let callerName = args["callerName"] as? String {
-        args["nameCaller"] = callerName
-      } else if let doctorName = args["doctorName"] as? String {
-        args["nameCaller"] = doctorName
-      } else if let doctor = toStringKeyed(args["doctor"] as Any),
-                let doctorName = doctor["name"] as? String {
-        args["nameCaller"] = doctorName
-      }
-    }
-    if args["handle"] == nil {
-      if let appointmentType = (args["appointmentType"] as? String) ?? (args["typeLabel"] as? String) {
-        args["handle"] = appointmentType
-      }
-    }
-    if args["handle"] == nil {
-      if let type = args["type"] as? String, !type.isEmpty {
-        args["handle"] = type
-      } else if let title = args["title"] as? String, !title.isEmpty {
-        args["handle"] = title
-      } else {
-        args["handle"] = "Appointment"
-      }
+        if let oid = args["_id"] as? String {
+            args["id"] = oid
+        } else if let aid = args["appointmentId"] as? String {
+            args["id"] = aid
+        }
     }
 
-    // Hard-require minimal fields for CallKit UI.
-    let id = (args["id"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-    let nameCaller = (args["nameCaller"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-    let handle = (args["handle"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-    if id.isEmpty || nameCaller.isEmpty || handle.isEmpty {
-      NSLog("PushKit: missing required CallKit fields id=\(id) name=\(nameCaller) handle=\(handle)")
-      return [:]
+    // 3. Normalize Caller Name from the doctor object
+    if args["nameCaller"] == nil {
+        if let doctor = toStringKeyed(args["doctor"] as Any),
+           let doctorName = doctor["name"] as? String {
+            args["nameCaller"] = doctorName
+        } else {
+            args["nameCaller"] = "Doctor"
+        }
     }
+
+    // 4. Normalize Handle (Subtitle)
+    if args["handle"] == nil {
+        args["handle"] = args["appointmentType"] as? String ?? "Regular Appointment"
+    }
+
+    // 5. Mandatory UUID Validation for CallKit
+    let id = (args["id"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    
+    // ✅ Ensure we pass the WHOLE decoded appointment as 'extra'
+    // This makes the tokens and other data available to Flutter on accept
+    args["extra"] = appointmentData
 
     if !_looksLikeUuid(id) {
-      let newId = UUID().uuidString
-      let originalId = id
-      args["id"] = newId
-      args["uuid"] = newId
-      var extra = toStringKeyed(args["extra"] as Any) ?? [:]
-      if extra["appointmentId"] == nil && !originalId.isEmpty {
-        extra["appointmentId"] = originalId
-      }
-      args["extra"] = extra
+        let newUuid = UUID().uuidString
+        args["id"] = newUuid
+        // Store the original Mongo ID in extra so Flutter can use it later
+        var extra = args["extra"] as? [String: Any] ?? [:]
+        extra["originalId"] = id
+        args["extra"] = extra
     }
+
     return args
-  }
+}
 }
