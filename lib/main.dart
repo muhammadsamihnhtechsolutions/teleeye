@@ -2337,9 +2337,6 @@
 //   }
 // // }
 
-
-
-
 // import 'dart:developer' as developer;
 // import 'dart:convert';
 
@@ -2585,7 +2582,6 @@
 //     );
 //   }
 // }
-
 
 // import 'dart:developer' as developer;
 // import 'dart:convert';
@@ -2841,9 +2837,6 @@
 //   }
 // }
 
-
-
-
 // import 'dart:developer' as developer;
 // import 'dart:convert';
 
@@ -2976,7 +2969,6 @@
 //     _setupTerminatedFCM();
 //   }
 
-
 // void _setupAwesomeListener() {
 //   AwesomeNotifications().setListeners(
 //     onActionReceivedMethod: (action) async {
@@ -3073,8 +3065,8 @@
 //     if (channelId == null || token == null) return;
 
 // Get.to(() => PatientCallScreen(
-//       channelId: channelId!,          
-//       token: token!,                 
+//       channelId: channelId!,
+//       token: token!,
 //       doctorName: doctorName ?? 'Doctor',
 //       doctorPhoto: doctorPhoto ?? '',
 // ));
@@ -3124,7 +3116,7 @@
 //     );
 //   }
 // }
-  
+
 // working main hey
 
 //   import 'dart:developer' as developer;
@@ -3259,7 +3251,6 @@
 //     _setupTerminatedFCM();
 //   }
 
-
 // void _setupAwesomeListener() {
 //   AwesomeNotifications().setListeners(
 //     onActionReceivedMethod: (action) async {
@@ -3325,8 +3316,6 @@
 //   }
 // }
 
-
-  
 //  /// ------------------------------------------------------------
 // /// OPEN CALL (UPDATED)
 // /// ------------------------------------------------------------
@@ -3372,7 +3361,6 @@
 //   }
 // }
 
-
 //   /// ------------------------------------------------------------
 //   /// LOCALE
 //   /// ------------------------------------------------------------
@@ -3415,12 +3403,9 @@
 //   }
 // }
 
-
 // onlyandoride
 
-
-
-// ios setup ye sahi hey 
+// ios setup ye sahi hey
 
 // import 'dart:developer' as developer;
 // import 'dart:convert';
@@ -3818,12 +3803,6 @@
 //   }
 // }
 
-
-
-
-
-
-
 // ===== IMPORTS SAME AS YOUR FIRST FILE + SOCKET =====
 
 // import 'dart:async';
@@ -3852,7 +3831,6 @@
 // import 'package:eye_buddy/core/services/utils/config/theme.dart';
 // import 'package:eye_buddy/core/services/utils/keys/shared_pref_keys.dart';
 // import 'package:eye_buddy/l10n/app_localizations.dart';
-
 
 // import 'package:flutter_localizations/flutter_localizations.dart';
 // import 'package:eye_buddy/features/splash/view/splash_screen.dart';
@@ -3946,7 +3924,6 @@
 //     dLog("📄 BG reject stack: $s");
 //   }
 // }
-
 
 // /// ================= BACKGROUND FCM =================
 // @pragma('vm:entry-point')
@@ -4058,7 +4035,6 @@
 
 //   debugPrint('🟢 main(): runApp called successfully');
 // }
-
 
 // /// ================= APP =================
 // class EyeBuddyApp extends StatefulWidget {
@@ -4300,9 +4276,6 @@
 //   }
 // }
 
-
-
-
 // crashfixeyestes
 import 'dart:async';
 import 'dart:developer' as developer;
@@ -4340,9 +4313,29 @@ import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 
 // ✅ EyeTest imports
 import 'package:eye_buddy/features/eye_test/controller/eye_test_controller.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:eye_buddy/core/services/utils/keys/token_keys.dart';
 
 void dLog(String msg) {
   if (kDebugMode) developer.log(msg);
+}
+
+void log(String message, {Object? error, StackTrace? stackTrace}) {
+  if (!kDebugMode) return;
+  developer.log(message, error: error, stackTrace: stackTrace);
+}
+
+void dPrint(Object? message) {
+  if (!kDebugMode) return;
+  // ignore: avoid_print
+  print(message);
+}
+
+void _handleCatch(String context, Object error, StackTrace stackTrace) {
+  log('ERROR[$context]: $error', error: error, stackTrace: stackTrace);
+  if (kDebugMode) {
+    Error.throwWithStackTrace(error, stackTrace);
+  }
 }
 
 Map<String, String> stringifyPayload(Map<String, dynamic> data) {
@@ -4425,9 +4418,7 @@ Future<void> backgroundRejectCall(String appointmentId) async {
 /// ================= BACKGROUND FCM =================
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   if (message.data['type'] == "CALL_CANCELLED") {
     await AwesomeNotifications().cancelAll();
@@ -4481,21 +4472,44 @@ Future<void> main() async {
 
   // Awesome Notifications
   try {
-    await AwesomeNotifications().initialize(
-      null,
-      [
-        NotificationChannel(
-          channelKey: 'call_channel',
-          channelName: 'Incoming Calls',
-          importance: NotificationImportance.Max,
-          locked: true,
-          channelDescription: 'Doctor calling notifications',
-        ),
-      ],
-    );
+    await AwesomeNotifications().initialize(null, [
+      NotificationChannel(
+        channelKey: 'call_channel',
+        channelName: 'Incoming Calls',
+        importance: NotificationImportance.Max,
+        locked: true,
+        channelDescription: 'Doctor calling notifications',
+      ),
+    ]);
     debugPrint('🟢 main(): AwesomeNotifications initialized');
   } catch (e) {
     debugPrint('🔴 main(): AwesomeNotifications init failed → $e');
+  }
+
+  Future<void> requestNotificationPermission() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    print('User granted permission: ${settings.authorizationStatus}');
+
+    // You can check the status to tailor the user experience
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('Permission granted');
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      print('Provisional permission granted (notifications shown quietly)');
+    } else {
+      print('Permission denied');
+    }
   }
 
   // Firebase
@@ -4503,6 +4517,38 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await requestNotificationPermission();
+    final String? fcmToken = await FirebaseMessaging.instance.getToken();
+    print(fcmToken);
+
+    if (Platform.isIOS) {
+      try {
+        final voipToken = await FlutterCallkitIncoming.getDevicePushTokenVoIP();
+        if (voipToken != null && voipToken.toString().trim().isNotEmpty) {
+          voipDeviceToken = voipToken.toString().trim();
+        }
+        dPrint('[TOKEN] VoIP token: $voipToken');
+        log('[TOKEN] VoIP token: $voipToken');
+        if (voipDeviceToken.isEmpty) {
+          Future.delayed(const Duration(seconds: 4), () async {
+            try {
+              final retryToken =
+                  await FlutterCallkitIncoming.getDevicePushTokenVoIP();
+              if (retryToken != null &&
+                  retryToken.toString().trim().isNotEmpty) {
+                voipDeviceToken = retryToken.toString().trim();
+                dPrint('[TOKEN] VoIP token retry: $retryToken');
+                log('[TOKEN] VoIP token retry: $retryToken');
+              }
+            } catch (e, st) {
+              _handleCatch('ios.voipTokenRetry', e, st);
+            }
+          });
+        }
+      } catch (e, st) {
+        _handleCatch('ios.voipToken', e, st);
+      }
+    }
     debugPrint('🟢 main(): Firebase initialized');
   } catch (e) {
     debugPrint('🔴 main(): Firebase init failed → $e');
@@ -4510,9 +4556,7 @@ Future<void> main() async {
 
   // FCM background handler
   try {
-    FirebaseMessaging.onBackgroundMessage(
-      firebaseMessagingBackgroundHandler,
-    );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     debugPrint('🟢 main(): Firebase background handler registered');
   } catch (e) {
     debugPrint('🔴 main(): FCM background handler failed → $e');
@@ -4521,11 +4565,7 @@ Future<void> main() async {
   debugPrint('🟡 main(): Starting app with DisplayMetrics');
 
   // ✅ Proper DisplayMetrics integration
-  runApp(
-    DisplayMetricsWidget(
-      child: const EyeBuddyApp(),
-    ),
-  );
+  runApp(DisplayMetricsWidget(child: const EyeBuddyApp()));
 
   debugPrint('🟢 main(): runApp called successfully');
 }
@@ -4611,12 +4651,14 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
   /// ================= FOREGROUND =================
   void _setupForegroundFCM() {
     FirebaseMessaging.onMessage.listen((message) async {
+      print("New Message on forground");
       if (message.data['type'] == "CALL_CANCELLED") {
         await AwesomeNotifications().cancelAll();
         return;
       }
 
       final meta = message.data['meta'];
+      debugPrint("received incomming call");
       if (meta == null || !meta.toString().contains('Calling')) return;
 
       await AwesomeNotifications().createNotification(
@@ -4711,13 +4753,15 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
 
       if (channelId == null || token == null) return;
 
-      Get.to(() => PatientCallScreen(
-            channelId: channelId!,
-            token: token!,
-            doctorName: doctorName!,
-            doctorPhoto: doctorPhoto!,
-            autoAccept: autoAccept,
-          ));
+      Get.to(
+        () => PatientCallScreen(
+          channelId: channelId!,
+          token: token!,
+          doctorName: doctorName!,
+          doctorPhoto: doctorPhoto!,
+          autoAccept: autoAccept,
+        ),
+      );
     } catch (e) {
       dLog('CALL OPEN ERROR $e');
     }
