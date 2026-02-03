@@ -436,9 +436,7 @@
 //   }
 // }
 
-
 // import 'dart:convert';
-
 
 // import 'package:eye_buddy/core/services/api/model/appointment_doctor_model.dart'
 //     as core_models;
@@ -802,7 +800,6 @@
 //   }
 // }
 
-
 import 'dart:convert';
 
 import 'package:eye_buddy/core/services/api/model/appointment_doctor_model.dart'
@@ -1082,8 +1079,9 @@ class AppointmentController extends GetxController {
       final upcoming = await _apiRepo.getAppointments("upcoming", patientId);
       final followup = await _apiRepo.getAppointments("followup", patientId);
 
-      pastAppointments.value =
-          core_models.GetAppointmentApiResponse.fromJson(past);
+      pastAppointments.value = core_models.GetAppointmentApiResponse.fromJson(
+        past,
+      );
       upcomingAppointments.value =
           core_models.GetAppointmentApiResponse.fromJson(upcoming);
       followupAppointments.value =
@@ -1135,30 +1133,28 @@ class AppointmentController extends GetxController {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      final pastJson =
-          prefs.getString("$patientId-getPastAppointmentApiResponse");
-      final upcomingJson =
-          prefs.getString("$patientId-getUpcomingAppointmentApiResponse");
-      final followupJson =
-          prefs.getString("$patientId-getFollowupAppointmentApiResponse");
+      final pastJson = prefs.getString(
+        "$patientId-getPastAppointmentApiResponse",
+      );
+      final upcomingJson = prefs.getString(
+        "$patientId-getUpcomingAppointmentApiResponse",
+      );
+      final followupJson = prefs.getString(
+        "$patientId-getFollowupAppointmentApiResponse",
+      );
 
       if (pastJson != null) {
-        pastAppointments.value =
-            core_models.GetAppointmentApiResponse.fromJson(
+        pastAppointments.value = core_models.GetAppointmentApiResponse.fromJson(
           jsonDecode(pastJson),
         );
       }
       if (upcomingJson != null) {
-        upcomingAppointments.value =
-            core_models.GetAppointmentApiResponse.fromJson(
-          jsonDecode(upcomingJson),
-        );
+        upcomingAppointments.value = core_models
+            .GetAppointmentApiResponse.fromJson(jsonDecode(upcomingJson));
       }
       if (followupJson != null) {
-        followupAppointments.value =
-            core_models.GetAppointmentApiResponse.fromJson(
-          jsonDecode(followupJson),
-        );
+        followupAppointments.value = core_models
+            .GetAppointmentApiResponse.fromJson(jsonDecode(followupJson));
       }
 
       log('✅ Cached appointments restored');
@@ -1167,4 +1163,3 @@ class AppointmentController extends GetxController {
     }
   }
 }
- 

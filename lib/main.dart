@@ -4492,6 +4492,50 @@ Future<void> main() async {
   debugPrint('🟢 main(): runApp called successfully');
 }
 
+/// ================= CALLKIT DECLINE HANDLER =================
+void _handleCallKitDecline(Map<String, dynamic>? body) async {
+  try {
+    dLog('🚫 CALLKIT: Declining call...');
+
+    // Extract appointment ID from CallKit body
+    String appointmentId = '';
+    if (body != null) {
+      appointmentId =
+          (body['extra']?['appointmentId'] ?? body['id'] ?? body['uuid'] ?? '')
+              .toString();
+    }
+
+    if (appointmentId.isNotEmpty) {
+      dLog('📞 CALLKIT: Rejecting appointment: $appointmentId');
+      await backgroundRejectCall(appointmentId);
+    }
+
+    // Clear any pending call UI
+    await AwesomeNotifications().cancelAll();
+  } catch (e) {
+    dLog('❌ CALLKIT: Decline error - $e');
+  }
+}
+
+/// ================= CALLKIT END HANDLER =================
+void _handleCallKitEnd(Map<String, dynamic>? body) async {
+  try {
+    dLog('🔚 CALLKIT: Ending call...');
+
+    // Clear any notifications
+    await AwesomeNotifications().cancelAll();
+
+    // Clear call state from prefs
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isCallAccepted', false);
+    await prefs.setBool('pendingIncomingCallOpen', false);
+
+    dLog('✅ CALLKIT: Call ended successfully');
+  } catch (e) {
+    dLog('❌ CALLKIT: End error - $e');
+  }
+}
+
 /// ================= CALLKIT ACCEPT HANDLER =================
 void _handleCallKitAccept(Map<String, dynamic>? body) async {
   try {
@@ -4568,14 +4612,14 @@ void _setupCallKitListener() {
     // Handle decline
     if (eventName.contains('actionCallDecline')) {
       dLog('❌ CALLKIT: Call declined');
-      // Reject call logic here
+      _handleCallKitDecline(body);
     }
 
     // Handle end
     if (eventName.contains('actionCallEnded') ||
         eventName.contains('actionCallTimeout')) {
       dLog('🔚 CALLKIT: Call ended');
-      // End call logic here
+      _handleCallKitEnd(body);
     }
   });
 
