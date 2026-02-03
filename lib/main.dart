@@ -4512,6 +4512,18 @@ void _handleCallKitAccept(Map<String, dynamic>? body) async {
 
     dLog('📞 CALLKIT: Connecting to appointment: $appointmentId');
 
+    // Fetch token from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('patient_agora_token');
+    final channelId = prefs.getString('agora_channel_id');
+
+    dLog(
+      '🔑 CALLKIT: Token found: ${token?.isNotEmpty == true ? "YES" : "NO"}',
+    );
+    dLog(
+      '📺 CALLKIT: Channel found: ${channelId?.isNotEmpty == true ? "YES" : "NO"}',
+    );
+
     // Navigate to existing call screen using EyeBuddyApp instance
     if (Get.context != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -4522,7 +4534,7 @@ void _handleCallKitAccept(Map<String, dynamic>? body) async {
           'meta': jsonEncode({
             'metaData': {
               '_id': appointmentId,
-              'patientAgoraToken': '', // Will be fetched from prefs
+              'patientAgoraToken': token ?? '',
               'doctor': {'name': 'Doctor'},
             },
           }),
