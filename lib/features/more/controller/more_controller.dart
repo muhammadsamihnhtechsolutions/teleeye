@@ -643,8 +643,8 @@ class MoreController extends GetxController {
     promos.refresh();
   }
 
-  Future<void> initSupport() async {
-    await fetchSupportThreads(selectLatest: true);
+  Future<void> initSupport(String appointmentId) async {
+    await fetchSupportThreads(selectLatest: true, appointmentId: appointmentId);
     final id = activeSupportId.value.trim();
     if (id.isNotEmpty) {
       await fetchSupportMessages(id);
@@ -653,10 +653,10 @@ class MoreController extends GetxController {
     }
   }
 
-  Future<void> fetchSupportThreads({bool selectLatest = false}) async {
+  Future<void> fetchSupportThreads({bool selectLatest = false, String appointmentId = ""}) async {
     isLoadingSupportList.value = true;
     try {
-      final raw = await _apiRepo.getSupportList();
+      final raw = await _apiRepo.getSupportList(appointmentId);
       if (kDebugMode) {
         log('Support list response: $raw');
       }
@@ -709,11 +709,15 @@ class MoreController extends GetxController {
     }
   }
 
-  Future<void> sendSupportMessage(String text) async {
+  Future<void> sendSupportMessage(String text, String appointmentId) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
     final existingId = activeSupportId.value.trim();
     final type = existingId.isEmpty ? 'new' : 'existing';
+
+    log(type == 'new'
+        ? 'Sending new support message...'
+        : 'Sending message to existing support thread $existingId...');
 
     isSendingSupportMessage.value = true;
     final optimistic = SupportMessage(
@@ -730,6 +734,7 @@ class MoreController extends GetxController {
         supportId: existingId.isEmpty ? null : existingId,
         content: trimmed,
         contentType: 'text',
+        appointmentId: appointmentId,
       );
       if (kDebugMode) {
         log('Support submit response: $raw');
@@ -742,12 +747,12 @@ class MoreController extends GetxController {
         }
       }
       if (activeSupportId.value.isEmpty) {
-        await fetchSupportThreads(selectLatest: true);
+        await fetchSupportThreads(selectLatest: true, appointmentId: appointmentId);
       }
       if (activeSupportId.value.isNotEmpty) {
         await fetchSupportMessages(activeSupportId.value);
       }
-      await fetchSupportThreads(selectLatest: false);
+      await fetchSupportThreads(selectLatest: false, appointmentId: appointmentId);
     } catch (e, s) {
       log('MoreController: sendSupportMessage error -> $e', stackTrace: s);
       showToastMessage(message: 'Failed to send message');

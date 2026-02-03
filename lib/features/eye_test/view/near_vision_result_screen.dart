@@ -192,12 +192,12 @@ class _NearVisionResultScreenState extends State<NearVisionResultScreen> {
                             right: 25,
                             bottom: 20,
                           ),
-                          child: CustomButton(
-                            title: 'Send to Doctor',
-                            callBackFunction: () {
-                              Get.to(() => const SendEyeTestResultScreen());
-                            },
-                          ),
+                          // child: CustomButton(
+                          //   title: 'Send to Doctor',
+                          //   callBackFunction: () {
+                          //     Get.to(() => const SendEyeTestResultScreen());
+                          //   },
+                          // ),
                         ),
                         Padding(
                           padding: const EdgeInsets.only(

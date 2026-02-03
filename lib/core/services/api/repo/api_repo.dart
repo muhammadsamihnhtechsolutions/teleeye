@@ -1109,6 +1109,7 @@ class ApiRepo {
     }
   }
 
+
   Future<void> updateVisualAcuityTestResults({
     required String patientId,
     required String leftEyeScore,
@@ -1539,12 +1540,14 @@ class ApiRepo {
     String? supportId,
     required String content,
     required String contentType,
+    required String appointmentId,
   }) async {
     try {
       final payload = <String, dynamic>{
         'type': type,
         'content': content,
         'contentType': contentType,
+        'appointmentId': appointmentId,
       };
       if (supportId != null && supportId.trim().isNotEmpty) {
         payload['supportId'] = supportId.trim();
@@ -1568,9 +1571,10 @@ class ApiRepo {
   /// --------------------------------------------
   /// SUPPORT - LIST THREADS
   /// --------------------------------------------
-  Future<Map<String, dynamic>> getSupportList() async {
+  Future<Map<String, dynamic>> getSupportList(String appointmentId) async {
     try {
-      final raw = await _apiService.getGetResponse(ApiConstants.supportList);
+      final raw = await _apiService.getGetResponse(ApiConstants.supportList +
+          (appointmentId.isNotEmpty ? '/$appointmentId' : ''));
       if (kDebugMode) {
         log('Support list raw response: $raw');
       }

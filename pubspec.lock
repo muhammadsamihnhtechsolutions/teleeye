@@ -274,7 +274,7 @@ packages:
     source: hosted
     version: "2.1.1"
   display_metrics:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: display_metrics
       sha256: "53bf7bd95b4e606ada8c917390b278ed4856abf6123711e2436e62aefe9be46a"

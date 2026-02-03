@@ -151,7 +151,72 @@ class GetVisualAcuityTestScreenAppbar extends StatelessWidget {
   }
 }
 
-class MillimeterBox extends StatefulWidget {
+
+// class MillimeterBox extends StatefulWidget {
+//   final double mmVal;
+//   final int numberOfturns;
+
+//   const MillimeterBox({
+//     super.key,
+//     required this.mmVal,
+//     required this.numberOfturns,
+//   });
+
+//   @override
+//   State<MillimeterBox> createState() => _MillimeterBoxState();
+// }
+
+// class _MillimeterBoxState extends State<MillimeterBox> {
+//   late double screenWidth;
+//   late double screenHeight;
+//   double boxSizeInPixels = 0.0;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     WidgetsBinding.instance.addPostFrameCallback((_) {
+//       _updateScreenSize();
+//     });
+//   }
+
+//   void _updateScreenSize() {
+//     setState(() {
+//       screenWidth = MediaQuery.of(context).size.width;
+//       screenHeight = MediaQuery.of(context).size.height;
+
+//       // Assuming 1 inch = 25.4 millimeters
+//       final screenInches =
+//           screenWidth / MediaQuery.of(context).devicePixelRatio;
+//       final millimetersPerPixel = 25.4 / screenInches;
+//       boxSizeInPixels = millimetersPerPixel * 50;
+//     });
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     double ppi = DeviceUtils.getDevicePPI(context);
+//     double letterHeightMm = 0.582;
+//     double letterHeightPx = DeviceUtils.mmToPixels(letterHeightMm, ppi);
+
+//     return LayoutBuilder(
+//       builder: (context, constraints) {
+//         return Container(
+//           width: letterHeightPx + widget.mmVal,
+//           height: letterHeightPx + widget.mmVal,
+//           color: Colors.transparent,
+//           child: RotatedBox(
+//             quarterTurns: widget.numberOfturns,
+//             child: SvgPicture.asset(
+//               AppAssets.visualAcuityTestE,
+//               fit: BoxFit.cover,
+//             ),
+//           ),
+//         );
+//       },
+//     );
+//   }
+// }
+class MillimeterBox extends StatelessWidget {
   final double mmVal;
   final int numberOfturns;
 
@@ -162,52 +227,49 @@ class MillimeterBox extends StatefulWidget {
   });
 
   @override
-  State<MillimeterBox> createState() => _MillimeterBoxState();
-}
-
-class _MillimeterBoxState extends State<MillimeterBox> {
-  late double screenWidth;
-  late double screenHeight;
-  double boxSizeInPixels = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateScreenSize();
-    });
-  }
-
-  void _updateScreenSize() {
-    setState(() {
-      screenWidth = MediaQuery.of(context).size.width;
-      screenHeight = MediaQuery.of(context).size.height;
-
-      // Assuming 1 inch = 25.4 millimeters
-      final screenInches =
-          screenWidth / MediaQuery.of(context).devicePixelRatio;
-      final millimetersPerPixel = 25.4 / screenInches;
-      boxSizeInPixels = millimetersPerPixel * 50;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    double ppi = DeviceUtils.getDevicePPI(context);
-    double letterHeightMm = 0.582;
-    double letterHeightPx = DeviceUtils.mmToPixels(letterHeightMm, ppi);
+    final double ppi = DeviceUtils.getDevicePPI(context); // ✅ safe fallback inside
+    const double letterHeightMm = 0.582;
+
+    // mm → px (safe)
+    final double letterHeightPx =
+        DeviceUtils.mmToPixels(letterHeightMm, ppi);
+
+    // ✅ Safety guards
+    final double safeMmVal = mmVal.isFinite && mmVal > 0 ? mmVal : 0;
+    final double safeLetterPx =
+        letterHeightPx.isFinite && letterHeightPx > 0
+            ? letterHeightPx
+            : 10;
+
+    final double boxSize = safeLetterPx + safeMmVal;
+
+    assert(() {
+      debugPrint(
+        '[MillimeterBox] ppi=$ppi | letterPx=$safeLetterPx | mmVal=$safeMmVal | boxSize=$boxSize',
+      );
+      return true;
+    }());
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Container(
-          width: letterHeightPx + widget.mmVal,
-          height: letterHeightPx + widget.mmVal,
-          color: Colors.transparent,
+        // ✅ prevent overflow on small screens
+        final double maxAllowed =
+            constraints.maxWidth.isFinite && constraints.maxWidth > 0
+                ? constraints.maxWidth
+                : boxSize;
+
+        final double finalSize =
+            boxSize > maxAllowed ? maxAllowed : boxSize;
+
+        return SizedBox(
+          width: finalSize,
+          height: finalSize,
           child: RotatedBox(
-            quarterTurns: widget.numberOfturns,
+            quarterTurns: numberOfturns % 4, // ✅ safe rotation
             child: SvgPicture.asset(
               AppAssets.visualAcuityTestE,
-              fit: BoxFit.cover,
+              fit: BoxFit.contain,
             ),
           ),
         );

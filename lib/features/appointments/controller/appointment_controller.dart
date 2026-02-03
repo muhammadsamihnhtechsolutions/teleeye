@@ -804,7 +804,6 @@
 
 
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:eye_buddy/core/services/api/model/appointment_doctor_model.dart'
     as core_models;

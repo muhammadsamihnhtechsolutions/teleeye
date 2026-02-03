@@ -64,7 +64,7 @@ class AmdRightScreen extends StatelessWidget {
                       child: CustomButton(
                         title: 'Yes',
                         callBackFunction: () {
-                          Get.to(() => const AmdResultScreen());
+                          Get.to(() => const AmdTestFailedScreen(currentPage: 0,));
                         },
                       ),
                     ),
@@ -78,7 +78,7 @@ class AmdRightScreen extends StatelessWidget {
                         backGroundColor: AppColors.color888E9D,
                         callBackFunction: () {
                           controller.incrementAmdRight();
-                          Get.to(() => const AmdResultScreen());
+                          Get.to(() => const AmdTestFailedScreen(currentPage: 0,));
                         },
                       ),
                     ),
