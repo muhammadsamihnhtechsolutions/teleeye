@@ -1,3 +1,9 @@
 {
-  "dart.flutterSdkPath": ".fvm/versions/3.38.3"
+  // "dart.flutterSdkPath": ".fvm/versions/3.38.3",
+  "dart.flutterSdkPath": "/Users/mbp/fvm/versions/3.38.3",
+  "dart.sdkPath": "/Users/mbp/fvm/versions/3.38.3/bin/cache/dart-sdk",
+  "dart.flutterSdkPaths": [
+    "/Users/mbp/fvm/versions/3.38.3/bin"
+  ],
+  "cmake.ignoreCMakeListsMissing": true
 }

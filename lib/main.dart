@@ -2337,9 +2337,6 @@
 //   }
 // // }
 
-
-
-
 // import 'dart:developer' as developer;
 // import 'dart:convert';
 
@@ -2585,7 +2582,6 @@
 //     );
 //   }
 // }
-
 
 // import 'dart:developer' as developer;
 // import 'dart:convert';
@@ -2841,9 +2837,6 @@
 //   }
 // }
 
-
-
-
 // import 'dart:developer' as developer;
 // import 'dart:convert';
 
@@ -2976,7 +2969,6 @@
 //     _setupTerminatedFCM();
 //   }
 
-
 // void _setupAwesomeListener() {
 //   AwesomeNotifications().setListeners(
 //     onActionReceivedMethod: (action) async {
@@ -3073,8 +3065,8 @@
 //     if (channelId == null || token == null) return;
 
 // Get.to(() => PatientCallScreen(
-//       channelId: channelId!,          
-//       token: token!,                 
+//       channelId: channelId!,
+//       token: token!,
 //       doctorName: doctorName ?? 'Doctor',
 //       doctorPhoto: doctorPhoto ?? '',
 // ));
@@ -3124,7 +3116,7 @@
 //     );
 //   }
 // }
-  
+
 // working main hey
 
 //   import 'dart:developer' as developer;
@@ -3259,7 +3251,6 @@
 //     _setupTerminatedFCM();
 //   }
 
-
 // void _setupAwesomeListener() {
 //   AwesomeNotifications().setListeners(
 //     onActionReceivedMethod: (action) async {
@@ -3325,8 +3316,6 @@
 //   }
 // }
 
-
-  
 //  /// ------------------------------------------------------------
 // /// OPEN CALL (UPDATED)
 // /// ------------------------------------------------------------
@@ -3372,7 +3361,6 @@
 //   }
 // }
 
-
 //   /// ------------------------------------------------------------
 //   /// LOCALE
 //   /// ------------------------------------------------------------
@@ -3415,12 +3403,9 @@
 //   }
 // }
 
-
 // onlyandoride
 
-
-
-// ios setup ye sahi hey 
+// ios setup ye sahi hey
 
 // import 'dart:developer' as developer;
 // import 'dart:convert';
@@ -3818,12 +3803,6 @@
 //   }
 // }
 
-
-
-
-
-
-
 // ===== IMPORTS SAME AS YOUR FIRST FILE + SOCKET =====
 
 // import 'dart:async';
@@ -3852,7 +3831,6 @@
 // import 'package:eye_buddy/core/services/utils/config/theme.dart';
 // import 'package:eye_buddy/core/services/utils/keys/shared_pref_keys.dart';
 // import 'package:eye_buddy/l10n/app_localizations.dart';
-
 
 // import 'package:flutter_localizations/flutter_localizations.dart';
 // import 'package:eye_buddy/features/splash/view/splash_screen.dart';
@@ -3946,7 +3924,6 @@
 //     dLog("📄 BG reject stack: $s");
 //   }
 // }
-
 
 // /// ================= BACKGROUND FCM =================
 // @pragma('vm:entry-point')
@@ -4058,7 +4035,6 @@
 
 //   debugPrint('🟢 main(): runApp called successfully');
 // }
-
 
 // /// ================= APP =================
 // class EyeBuddyApp extends StatefulWidget {
@@ -4300,10 +4276,7 @@
 //   }
 // }
 
-
-
-
-// crashfixeyestesandoridemain chlti hey ios ka kam proper nh hey es main ..
+// crashfixeyestes
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:convert';
@@ -4340,9 +4313,46 @@ import 'package:eye_buddy/features/waiting_for_doctor/view/waiting_for_doctor_sc
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 
 import 'package:eye_buddy/features/eye_test/controller/eye_test_controller.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:eye_buddy/core/services/utils/keys/token_keys.dart';
+import 'dart:convert';
+
+/// Helper to extract the actual appointment map from your nested meta string ONLY FOR IOS
+Map<String, dynamic> _getAppointmentData(Map<String, dynamic>? body) {
+  try {
+    if (body == null || body['extra'] == null) return {};
+
+    // In your new object, the data is a JSON string inside 'meta'
+    final String? metaString = body['extra']['meta'];
+    if (metaString != null && metaString.isNotEmpty) {
+      return jsonDecode(metaString);
+    }
+  } catch (e) {
+    dLog('❌ Error parsing meta JSON: $e');
+  }
+  return {};
+}
 
 void dLog(String msg) {
   if (kDebugMode) developer.log(msg);
+}
+
+void log(String message, {Object? error, StackTrace? stackTrace}) {
+  if (!kDebugMode) return;
+  developer.log(message, error: error, stackTrace: stackTrace);
+}
+
+void dPrint(Object? message) {
+  if (!kDebugMode) return;
+  // ignore: avoid_print
+  print(message);
+}
+
+void _handleCatch(String context, Object error, StackTrace stackTrace) {
+  log('ERROR[$context]: $error', error: error, stackTrace: stackTrace);
+  if (kDebugMode) {
+    Error.throwWithStackTrace(error, stackTrace);
+  }
 }
 
 Map<String, String> stringifyPayload(Map<String, dynamic> data) {
@@ -4425,9 +4435,7 @@ Future<void> backgroundRejectCall(String appointmentId) async {
 /// ================= BACKGROUND FCM =================
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   if (message.data['type'] == "CALL_CANCELLED") {
     await AwesomeNotifications().cancelAll();
@@ -4481,21 +4489,44 @@ Future<void> main() async {
 
   // Awesome Notifications
   try {
-    await AwesomeNotifications().initialize(
-      null,
-      [
-        NotificationChannel(
-          channelKey: 'call_channel',
-          channelName: 'Incoming Calls',
-          importance: NotificationImportance.Max,
-          locked: true,
-          channelDescription: 'Doctor calling notifications',
-        ),
-      ],
-    );
+    await AwesomeNotifications().initialize(null, [
+      NotificationChannel(
+        channelKey: 'call_channel',
+        channelName: 'Incoming Calls',
+        importance: NotificationImportance.Max,
+        locked: true,
+        channelDescription: 'Doctor calling notifications',
+      ),
+    ]);
     debugPrint('🟢 main(): AwesomeNotifications initialized');
   } catch (e) {
     debugPrint('🔴 main(): AwesomeNotifications init failed → $e');
+  }
+
+  Future<void> requestNotificationPermission() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    print('User granted permission: ${settings.authorizationStatus}');
+
+    // You can check the status to tailor the user experience
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('Permission granted');
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      print('Provisional permission granted (notifications shown quietly)');
+    } else {
+      print('Permission denied');
+    }
   }
 
   // Firebase
@@ -4503,6 +4534,38 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await requestNotificationPermission();
+    final String? fcmToken = await FirebaseMessaging.instance.getToken();
+    print(fcmToken);
+
+    if (Platform.isIOS) {
+      try {
+        final voipToken = await FlutterCallkitIncoming.getDevicePushTokenVoIP();
+        if (voipToken != null && voipToken.toString().trim().isNotEmpty) {
+          voipDeviceToken = voipToken.toString().trim();
+        }
+        dPrint('[TOKEN] VoIP token: $voipToken');
+        log('[TOKEN] VoIP token: $voipToken');
+        if (voipDeviceToken.isEmpty) {
+          Future.delayed(const Duration(seconds: 4), () async {
+            try {
+              final retryToken =
+                  await FlutterCallkitIncoming.getDevicePushTokenVoIP();
+              if (retryToken != null &&
+                  retryToken.toString().trim().isNotEmpty) {
+                voipDeviceToken = retryToken.toString().trim();
+                dPrint('[TOKEN] VoIP token retry: $retryToken');
+                log('[TOKEN] VoIP token retry: $retryToken');
+              }
+            } catch (e, st) {
+              _handleCatch('ios.voipTokenRetry', e, st);
+            }
+          });
+        }
+      } catch (e, st) {
+        _handleCatch('ios.voipToken', e, st);
+      }
+    }
     debugPrint('🟢 main(): Firebase initialized');
   } catch (e) {
     debugPrint('🔴 main(): Firebase init failed → $e');
@@ -4510,9 +4573,7 @@ Future<void> main() async {
 
   // FCM background handler
   try {
-    FirebaseMessaging.onBackgroundMessage(
-      firebaseMessagingBackgroundHandler,
-    );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     debugPrint('🟢 main(): Firebase background handler registered');
   } catch (e) {
     debugPrint('🔴 main(): FCM background handler failed → $e');
@@ -4521,13 +4582,219 @@ Future<void> main() async {
   debugPrint('🟡 main(): Starting app with DisplayMetrics');
 
   // ✅ Proper DisplayMetrics integration
-  runApp(
-    DisplayMetricsWidget(
-      child: const EyeBuddyApp(),
-    ),
-  );
+  runApp(DisplayMetricsWidget(child: const EyeBuddyApp()));
 
   debugPrint('🟢 main(): runApp called successfully');
+}
+
+// /// ================= CALLKIT DECLINE HANDLER =================
+// void _handleCallKitDecline(Map<String, dynamic>? body) async {
+//   try {
+//     dLog('🚫 CALLKIT: Declining call...');
+
+//     // Extract appointment ID from CallKit body
+//     String appointmentId = '';
+//     if (body != null) {
+//       appointmentId =
+//           (body['extra']?['appointmentId'] ?? body['id'] ?? body['uuid'] ?? '')
+//               .toString();
+//     }
+
+//     if (appointmentId.isNotEmpty) {
+//       dLog('📞 CALLKIT: Rejecting appointment: $appointmentId');
+//       await backgroundRejectCall(appointmentId);
+//     }
+
+//     // Clear any pending call UI
+//     await AwesomeNotifications().cancelAll();
+//   } catch (e) {
+//     dLog('❌ CALLKIT: Decline error - $e');
+//   }
+// }
+
+// /// ================= CALLKIT END HANDLER =================
+// void _handleCallKitEnd(Map<String, dynamic>? body) async {
+//   try {
+//     dLog('🔚 CALLKIT: Ending call...');
+
+//     // Clear any notifications
+//     await AwesomeNotifications().cancelAll();
+
+//     // Clear call state from prefs
+//     final prefs = await SharedPreferences.getInstance();
+//     await prefs.setBool('isCallAccepted', false);
+//     await prefs.setBool('pendingIncomingCallOpen', false);
+
+//     dLog('✅ CALLKIT: Call ended successfully');
+//   } catch (e) {
+//     dLog('❌ CALLKIT: End error - $e');
+//   }
+// }
+
+// /// ================= CALLKIT ACCEPT HANDLER =================
+// void _handleCallKitAccept(Map<String, dynamic>? body) async {
+//   try {
+//     dLog('🔗 CALLKIT: Connecting call...');
+
+//     // Extract appointment ID from CallKit body
+//     String appointmentId = '';
+//     if (body != null) {
+//       appointmentId =
+//           (body['extra']?['appointmentId'] ?? body['id'] ?? body['uuid'] ?? '')
+//               .toString();
+//     }
+
+//     if (appointmentId.isEmpty) {
+//       dLog('❌ CALLKIT: No appointment ID found');
+//       return;
+//     }
+
+//     dLog('📞 CALLKIT: Connecting to appointment: $appointmentId');
+
+//     // Fetch token from SharedPreferences
+//     final prefs = await SharedPreferences.getInstance();
+//     final token = prefs.getString('patient_agora_token');
+//     final channelId = prefs.getString('agora_channel_id');
+
+//     dLog(
+//       '🔑 CALLKIT: Token found: ${token?.isNotEmpty == true ? "YES" : "NO"}',
+//     );
+//     dLog(
+//       '📺 CALLKIT: Channel found: ${channelId?.isNotEmpty == true ? "YES" : "NO"}',
+//     );
+
+//     // Navigate to existing call screen using EyeBuddyApp instance
+//     if (Get.context != null) {
+//       WidgetsBinding.instance.addPostFrameCallback((_) {
+//         // Find the app state and call the existing method
+//         final appState = Get.context
+//             ?.findAncestorStateOfType<_EyeBuddyAppState>();
+//         appState?._openCallFromPayload({
+//           'meta': jsonEncode({
+//             'metaData': {
+//               '_id': appointmentId,
+//               'patientAgoraToken': token ?? '',
+//               'doctor': {'name': 'Doctor'},
+//             },
+//           }),
+//         }, autoAccept: true);
+//       });
+//     }
+//   } catch (e) {
+//     dLog('❌ CALLKIT: Accept error - $e');
+//   }
+// }
+
+void _handleCallKitDecline(Map<String, dynamic>? body) async {
+  try {
+    dLog('🚫 CALLKIT: Declining call...');
+
+    final appointmentData = _getAppointmentData(body);
+    // Use the real database _id from the parsed meta
+    final String appointmentId = (appointmentData['_id'] ?? '').toString();
+
+    if (appointmentId.isNotEmpty) {
+      dLog('📞 CALLKIT: Rejecting appointment: $appointmentId');
+      await backgroundRejectCall(appointmentId);
+    }
+
+    await AwesomeNotifications().cancelAll();
+  } catch (e) {
+    dLog('❌ CALLKIT: Decline error - $e');
+  }
+}
+
+void _handleCallKitAccept(Map<String, dynamic>? body) async {
+  try {
+    dLog('🔗 CALLKIT: Connecting call...');
+
+    final appointmentData = _getAppointmentData(body);
+
+    // Extracting real values directly from the parsed meta object
+    final String appointmentId = (appointmentData['_id'] ?? '').toString();
+    final String token = (appointmentData['patientAgoraToken'] ?? '')
+        .toString();
+    final String doctorName = (appointmentData['doctor']?['name'] ?? 'Doctor')
+        .toString();
+    final String doctorPhoto = (appointmentData['doctor']?['photo'] ?? '')
+        .toString();
+
+    if (appointmentId.isEmpty) {
+      dLog('❌ CALLKIT: No appointment ID found in meta');
+      return;
+    }
+
+    dLog('📞 CALLKIT: Data extracted from Meta for ID: $appointmentId');
+
+    if (Get.context != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final appState = Get.context
+            ?.findAncestorStateOfType<_EyeBuddyAppState>();
+
+        // We pass the data exactly how your _openCallFromPayload expects it
+        appState?._openCallFromPayload({
+          'meta': jsonEncode({
+            'metaData': {
+              '_id': appointmentId,
+              'patientAgoraToken': token,
+              'doctor': {'name': doctorName, 'photo': doctorPhoto},
+            },
+          }),
+        }, autoAccept: true);
+      });
+    }
+  } catch (e) {
+    dLog('❌ CALLKIT: Accept error - $e');
+  }
+}
+
+void _handleCallKitEnd(Map<String, dynamic>? body) async {
+  try {
+    dLog('🔚 CALLKIT: Ending call...');
+    await AwesomeNotifications().cancelAll();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isCallAccepted', false);
+    await prefs.setBool('pendingIncomingCallOpen', false);
+  } catch (e) {
+    dLog('❌ CALLKIT: End error - $e');
+  }
+}
+
+/// ================= CALLKIT LISTENER =================
+void _setupCallKitListener() {
+  if (!Platform.isIOS) return;
+
+  FlutterCallkitIncoming.onEvent.listen((event) {
+    if (event == null) return;
+
+    final eventName = event.event.toString();
+    final body = event.body;
+
+    dLog('📱 CALLKIT EVENT: $eventName');
+    dLog('📱 CALLKIT BODY: $body');
+
+    // Handle accept
+    if (eventName.contains('actionCallAccept')) {
+      dLog('✅ CALLKIT: Call accepted');
+      _handleCallKitAccept(body);
+    }
+
+    // Handle decline
+    if (eventName.contains('actionCallDecline')) {
+      dLog('❌ CALLKIT: Call declined');
+      _handleCallKitDecline(body);
+    }
+
+    // Handle end
+    if (eventName.contains('actionCallEnded') ||
+        eventName.contains('actionCallTimeout')) {
+      dLog('🔚 CALLKIT: Call ended');
+      _handleCallKitEnd(body);
+    }
+  });
+
+  dLog('📱 CALLKIT: Listener setup complete');
 }
 
 /// ================= APP =================
@@ -4543,16 +4810,16 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
   void initState() {
     super.initState();
 
-
-  // ✅ ProfileController register (GLOBAL)
-  if (!Get.isRegistered<ProfileController>()) {
-    Get.put(ProfileController(), permanent: true);
-    dLog("👤 ProfileController registered globally");
-  }
+    // ✅ ProfileController register (GLOBAL)
+    if (!Get.isRegistered<ProfileController>()) {
+      Get.put(ProfileController(), permanent: true);
+      dLog("👤 ProfileController registered globally");
+    }
     _restoreLocale();
     _setupAwesomeListener();
     _setupForegroundFCM();
     _setupTerminatedFCM();
+    _setupCallKitListener();
     _handleKilledAwesomeAction();
     _ensureAndroidFullScreenIntentPermission();
 
@@ -4619,12 +4886,14 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
   /// ================= FOREGROUND =================
   void _setupForegroundFCM() {
     FirebaseMessaging.onMessage.listen((message) async {
+      print("New Message on forground");
       if (message.data['type'] == "CALL_CANCELLED") {
         await AwesomeNotifications().cancelAll();
         return;
       }
 
       final meta = message.data['meta'];
+      debugPrint("received incomming call");
       if (meta == null || !meta.toString().contains('Calling')) return;
 
       await AwesomeNotifications().createNotification(
@@ -4651,8 +4920,9 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
           ),
         ],
       );
-
-      _openCallFromPayload(stringifyPayload(message.data));
+      if (Platform.isAndroid) {
+        _openCallFromPayload(stringifyPayload(message.data));
+      }
     });
   }
 
@@ -4719,13 +4989,15 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
 
       if (channelId == null || token == null) return;
 
-      Get.to(() => PatientCallScreen(
-            channelId: channelId!,
-            token: token!,
-            doctorName: doctorName!,
-            doctorPhoto: doctorPhoto!,
-            autoAccept: autoAccept,
-          ));
+      Get.to(
+        () => PatientCallScreen(
+          channelId: channelId!,
+          token: token!,
+          doctorName: doctorName!,
+          doctorPhoto: doctorPhoto!,
+          autoAccept: autoAccept,
+        ),
+      );
     } catch (e) {
       dLog('CALL OPEN ERROR $e');
     }

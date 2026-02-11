@@ -58,6 +58,12 @@
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>voip</string>
+		<string>audio</string>
+		<string>remote-notification</string>
+	</array>
 
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<true/>
@@ -77,6 +83,10 @@
 	<string>ca-app-pub-3940256099942544~1458002511</string>
 	<key>FirebaseMessagingAutoInitEnabled</key>
 	<string>NO</string>
+
+	<key>aps-environment</key>
+	<string>production</string>
+
 
 </dict>
 </plist>
