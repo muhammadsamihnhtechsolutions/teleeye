@@ -86,6 +86,7 @@ class ReasonForVisitController extends GetxController {
     required String patientId,
   }) async {
     try {
+      isLoading.value = true;
       final safePatientId = patientId.trim();
       if (safePatientId.isEmpty) return;
 
@@ -122,50 +123,122 @@ class ReasonForVisitController extends GetxController {
       }
 
       addPatientPrescriptionFile(file: file);
+      
     } catch (e, s) {
       log('selectLastPrescriptionFromLibrary error: $e', stackTrace: s);
       errorMessage.value = 'Failed to attach prescription';
     } finally {
+      isLoading.value = false;
       _setPickingImage(false);
     }
   }
 
-  String _resolveS3Url(String? value) {
-    final v = (value ?? '').trim();
-    if (v.isEmpty) return '';
-    if (v.startsWith('http://') || v.startsWith('https://')) return v;
-    return '${ApiConstants.imageBaseUrl}$v';
+  // String _resolveS3Url(String? value) {
+  //   final v = (value ?? '').trim();
+  //   if (v.isEmpty) return '';
+  //   if (v.startsWith('http://') || v.startsWith('https://')) return v;
+  //   return '${ApiConstants.imageBaseUrl}$v';
+  // }
+
+String _makeFullUrl(String raw) {
+  final v = raw.trim();
+  if (v.startsWith('http://') || v.startsWith('https://')) return v;
+
+  // ✅ base + path join safe
+  final base = ApiConstants.imageBaseUrl.endsWith('/')
+      ? ApiConstants.imageBaseUrl
+      : '${ApiConstants.imageBaseUrl}/';
+
+  final fixedPath = v.startsWith('/') ? v.substring(1) : v;
+
+  return '$base$fixedPath';
+}
+
+Future<File?> _downloadToTempFile(String? url) async {
+  log('🟦 [RFV-DL] START download');
+
+  if (url == null || url.trim().isEmpty) {
+    log('🟥 [RFV-DL] url is null/empty');
+    return null;
   }
 
-  Future<File?> _downloadToTempFile(String? url) async {
-    final resolved = _resolveS3Url(url);
-    final uri = Uri.tryParse(resolved);
-    if (uri == null) return null;
+  final raw = url.trim();
+  final fullUrl = _makeFullUrl(raw);
 
-    final directory = await getTemporaryDirectory();
-    final ext = p.extension(uri.path);
-    final safeExt = ext.isNotEmpty ? ext : '.jpg';
-    final fileName =
-        'prescription_${DateTime.now().millisecondsSinceEpoch}$safeExt';
-    final path = p.join(directory.path, fileName);
+  log('🟦 [RFV-DL] urlRaw=$raw');
+  log('🟦 [RFV-DL] urlFull=$fullUrl');
 
-    try {
-      final options = await _buildDownloadOptions();
-      await _dio.download(resolved, path, options: options);
-      return File(path);
-    } on DioException catch (e, s) {
-      log('download prescription failed: $e', stackTrace: s);
-      return null;
-    } catch (e, s) {
-      log('download prescription failed: $e', stackTrace: s);
-      return null;
+  final uri = Uri.tryParse(fullUrl);
+  if (uri == null || uri.host.isEmpty) {
+    log('🟥 [RFV-DL] invalid URI or missing host. uri=$uri');
+    return null;
+  }
+
+  final directory = await getTemporaryDirectory();
+  log('🟦 [RFV-DL] tempDir=${directory.path}');
+
+  // ✅ extension same as url
+  final ext = p.extension(uri.path);
+  final safeExt = ext.isNotEmpty ? ext : '.jpg';
+
+  final fileName = 'prescription_${DateTime.now().millisecondsSinceEpoch}$safeExt';
+  final path = p.join(directory.path, fileName);
+
+  log('🟦 [RFV-DL] savePath=$path');
+  log('🟦 [RFV-DL] host=${uri.host}');
+
+  try {
+    log('🟦 [RFV-DL] dio.download WITHOUT headers');
+    final res = await _dio.download(fullUrl, path);
+
+    log('🟩 [RFV-DL] statusCode=${res.statusCode}');
+
+    final file = File(path);
+    final exists = await file.exists();
+    log('🟩 [RFV-DL] fileExists=$exists');
+
+    if (exists) {
+      final size = await file.length();
+      log('🟩 [RFV-DL] fileSize=$size bytes');
     }
+
+    return exists ? file : null;
+  } catch (e, s) {
+    log('🟥 [RFV-DL] Download failed: $e', stackTrace: s);
+    return null;
   }
+}
+
+  // Future<File?> _downloadToTempFile(String? url) async {
+  //   final resolved = _resolveS3Url(url);
+  //   final uri = Uri.tryParse(resolved);
+  //   if (uri == null) return null;
+
+  //   final directory = await getTemporaryDirectory();
+  //   final ext = p.extension(uri.path);
+  //   final safeExt = ext.isNotEmpty ? ext : '.jpg';
+  //   final fileName =
+  //       'prescription_${DateTime.now().millisecondsSinceEpoch}$safeExt';
+  //   final path = p.join(directory.path, fileName);
+
+  //   try {
+  //     final options = await _buildDownloadOptions();
+  //     await _dio.download(resolved, path, options: options);
+  //     return File(path);
+  //   } on DioException catch (e, s) {
+  //     log('download prescription failed: $e', stackTrace: s);
+  //     return null;
+  //   } catch (e, s) {
+  //     log('download prescription failed: $e', stackTrace: s);
+  //     return null;
+  //   }
+  // }
 
   Future<void> selectPrescriptionFromLibrary({
     required String patientId,
   }) async {
     try {
+      isLoading.value = true;
       final safePatientId = patientId.trim();
       if (safePatientId.isEmpty) return;
 
@@ -188,6 +261,7 @@ class ReasonForVisitController extends GetxController {
           return 0;
         }
       });
+      isLoading.value = false;
       if (items.isEmpty) {
         errorMessage.value = 'No prescriptions found';
         _showNoPrescriptionsDialog();
@@ -248,6 +322,7 @@ class ReasonForVisitController extends GetxController {
                         subtitle: Text((item.createdAt ?? '').toString()),
                         onTap: () async {
                           try {
+                            isLoading.value = true;
                             final file = await _downloadToTempFile(item.file);
                             if (file != null) {
                               addPatientPrescriptionFile(file: file);
@@ -260,6 +335,7 @@ class ReasonForVisitController extends GetxController {
                             errorMessage.value =
                                 'Failed to attach prescription';
                           } finally {
+                            isLoading.value = false;
                             Get.back();
                           }
                         },
@@ -336,6 +412,7 @@ class ReasonForVisitController extends GetxController {
 
   void addPatientPrescriptionFile({required File file}) {
     reportAndPrescriptionList.add(file);
+    
   }
 
   void deletePatientPrescriptionFile({required int position}) {
