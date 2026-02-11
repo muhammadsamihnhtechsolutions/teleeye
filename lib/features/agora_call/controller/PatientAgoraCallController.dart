@@ -1,10 +1,8 @@
-
 // import 'dart:developer';
 // import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 // import 'package:eye_buddy/features/waiting_for_prescription/view/waiting_for_prescription_screen.dart';
 // import 'package:get/get.dart';
 // import 'package:eye_buddy/core/socket/PatientCallSocketHandler.dart';
-
 
 // class PatientAgoraCallController extends GetxController {
 //   RtcEngine? engine;
@@ -18,8 +16,6 @@
 //   RxBool isSpeakerOn = false.obs;
 //   RxBool shouldCloseCallScreen = false.obs;
 //   final RxBool isRemoteSpeaking = false.obs;
-
-  
 
 //   /// 🔥 RINGING STATE
 //   RxBool isRinging = false.obs;
@@ -88,7 +84,6 @@
 
 //   /// ---------------- END CALL (PUBLIC) ----------------
 
-
 //   Future<void> endCall() async {
 //   log('📴 endCall() pressed');
 
@@ -102,7 +97,6 @@
 //   /// 🔥 NAVIGATION HERE
 //   Get.offAll(() => const WaitingForPrescriptionScreen());
 // }
-
 
 //   /// ---------------- JOIN AGORA ----------------
 //   Future<void> _joinAgora() async {
@@ -214,7 +208,7 @@
 //     if (_callEnded) {
 //       log('⛔ _endCall skipped');
 //       return;
-      
+
 //     }
 
 //     _callEnded = true;
@@ -251,7 +245,6 @@
 //     super.onClose();
 //   }
 // }
-
 
 // import 'dart:developer';
 // import 'package:agora_rtc_engine/agora_rtc_engine.dart';
@@ -382,7 +375,6 @@
 
 //   await _joinAgora();
 // }
-
 
 //   /// ---------------- DECLINE ----------------
 //   Future<void> declineCall() async {
@@ -562,12 +554,15 @@
 //   }
 // }
 
-
 import 'dart:developer';
+import 'dart:io';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:eye_buddy/core/services/utils/handlers/PatientCallSocketHandler.dart';
 import 'package:eye_buddy/features/waiting_for_prescription/view/waiting_for_prescription_screen.dart';
 import 'package:get/get.dart';
+import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PatientAgoraCallController extends GetxController {
   RtcEngine? engine;
@@ -634,7 +629,7 @@ class PatientAgoraCallController extends GetxController {
 
     _socket.initSocket(
       appointmentId: channelId,
- 
+
       onRejectedEvent: (data) {
         log('📡 SOCKET: call_rejected → $data');
         _handleDoctorEndedCall();
@@ -642,7 +637,8 @@ class PatientAgoraCallController extends GetxController {
       onEndedEvent: (data) {
         log('📡 SOCKET: call_ended → $data');
         _handleDoctorEndedCall();
-      }, onJoinedEvent: (data) {  },
+      },
+      onJoinedEvent: (data) {},
     );
 
     log('🔗 Socket initialized for appointmentId: $channelId');
@@ -659,6 +655,30 @@ class PatientAgoraCallController extends GetxController {
 
     _callEnded = true;
     isRinging.value = false;
+    if (!_callEnded) {
+      log('📡 SOCKET EMIT: rejectCall');
+
+      /// ✅ FIXED
+      _socket.socket?.emit('rejectCall', {'appointmentId': channelId});
+    }
+
+    if (Platform.isIOS) {
+      /// ✅ FIXED
+      _socket.socket?.emit('endCall', {'appointmentId': channelId});
+      await FlutterCallkitIncoming.endCall(channelId);
+
+      // 2. Clear all system notifications
+      await FlutterCallkitIncoming.endAllCalls();
+      await AwesomeNotifications().cancelAll();
+
+      // 3. Clean up Agora (Assuming you have an engine instance)
+      // await _engine.leaveChannel();
+      // await _engine.release();
+
+      // 4. Update your local state/UI
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isCallAccepted', false);
+    }
 
     await _endCall();
 
@@ -671,9 +691,7 @@ class PatientAgoraCallController extends GetxController {
     if (_callEnded) return;
 
     /// ✅ FIXED
-    _socket.socket?.emit('joinedCall', {
-      'appointmentId': channelId,
-    });
+    _socket.socket?.emit('joinedCall', {'appointmentId': channelId});
 
     isRinging.value = false;
 
@@ -687,10 +705,26 @@ class PatientAgoraCallController extends GetxController {
     if (!_callEnded) {
       log('📡 SOCKET EMIT: rejectCall');
 
+      if (Platform.isIOS) {
+        /// ✅ FIXED
+        _socket.socket?.emit('endCall', {'appointmentId': channelId});
+        await FlutterCallkitIncoming.endCall(channelId);
+
+        // 2. Clear all system notifications
+        await FlutterCallkitIncoming.endAllCalls();
+        await AwesomeNotifications().cancelAll();
+
+        // 3. Clean up Agora (Assuming you have an engine instance)
+        // await _engine.leaveChannel();
+        // await _engine.release();
+
+        // 4. Update your local state/UI
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isCallAccepted', false);
+      }
+
       /// ✅ FIXED
-      _socket.socket?.emit('rejectCall', {
-        'appointmentId': channelId,
-      });
+      _socket.socket?.emit('rejectCall', {'appointmentId': channelId});
     }
 
     await endCall();
@@ -707,10 +741,23 @@ class PatientAgoraCallController extends GetxController {
 
     log('📡 SOCKET EMIT: endCall');
 
-    /// ✅ FIXED
-    _socket.socket?.emit('endCall', {
-      'appointmentId': channelId,
-    });
+    if (Platform.isIOS) {
+      /// ✅ FIXED
+      _socket.socket?.emit('endCall', {'appointmentId': channelId});
+      await FlutterCallkitIncoming.endCall(channelId);
+
+      // 2. Clear all system notifications
+      await FlutterCallkitIncoming.endAllCalls();
+      await AwesomeNotifications().cancelAll();
+
+      // 3. Clean up Agora (Assuming you have an engine instance)
+      // await _engine.leaveChannel();
+      // await _engine.release();
+
+      // 4. Update your local state/UI
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isCallAccepted', false);
+    }
 
     await _endCall();
 
@@ -765,16 +812,12 @@ class PatientAgoraCallController extends GetxController {
         ),
       );
 
-      await engine!.setClientRole(
-        role: ClientRoleType.clientRoleBroadcaster,
-      );
+      await engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
 
       await engine!.enableVideo();
       await engine!.enableAudio();
 
-      await engine!.setupLocalVideo(
-        const VideoCanvas(uid: 0),
-      );
+      await engine!.setupLocalVideo(const VideoCanvas(uid: 0));
 
       await engine!.startPreview();
 
