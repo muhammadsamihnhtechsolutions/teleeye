@@ -4303,7 +4303,7 @@
 
 
 
-// crashfixeyestes
+// crashfixeyestesandoridemain chlti hey ios ka kam proper nh hey es main ..
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:convert';
@@ -4311,6 +4311,7 @@ import 'dart:io';
 
 import 'package:display_metrics/display_metrics.dart';
 import 'package:eye_buddy/core/services/utils/handlers/PatientCallSocketHandler.dart';
+import 'package:eye_buddy/features/login/controller/profile_controller.dart';
 import 'package:eye_buddy/features/reason_for_visit/view/appointment_overview_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -4338,7 +4339,6 @@ import 'package:eye_buddy/features/waiting_for_doctor/view/waiting_for_doctor_sc
 
 import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
 
-// ✅ EyeTest imports
 import 'package:eye_buddy/features/eye_test/controller/eye_test_controller.dart';
 
 void dLog(String msg) {
@@ -4543,6 +4543,12 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
   void initState() {
     super.initState();
 
+
+  // ✅ ProfileController register (GLOBAL)
+  if (!Get.isRegistered<ProfileController>()) {
+    Get.put(ProfileController(), permanent: true);
+    dLog("👤 ProfileController registered globally");
+  }
     _restoreLocale();
     _setupAwesomeListener();
     _setupForegroundFCM();
@@ -4582,7 +4588,9 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
           try {
             final meta = jsonDecode(payload['meta'] ?? '{}');
             appointmentId = meta['metaData']?['_id'];
-          } catch (_) {}
+          } catch (_) {
+            ("MetaDatanh i mila");
+          }
 
           if (appointmentId != null) {
             await backgroundRejectCall(appointmentId);
