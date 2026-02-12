@@ -4468,10 +4468,13 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         label: 'Decline',
         color: Colors.red,
         isDangerousOption: true,
-        actionType: ActionType.SilentBackgroundAction,
+        actionType: ActionType.Default,
+
+        // actionType: ActionType.SilentBackgroundAction,
       ),
     ],
   );
+  
 }
 
 /// ================= MAIN =================
@@ -4848,7 +4851,24 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
       onActionReceivedMethod: (action) async {
         final payload = action.payload ?? {};
 
+
         /// ===== DECLINE =====
+//         if (action.buttonKeyPressed == 'DECLINE_CALL') {
+//   String? appointmentId;
+//   try {
+//     final meta = jsonDecode(payload['meta'] ?? '{}');
+//     appointmentId = meta['metaData']?['_id']?.toString();
+//   } catch (_) {}
+
+//   if (appointmentId != null && appointmentId.isNotEmpty) {
+//     await backgroundRejectCall(appointmentId); // ✅ this notifies doctor via socket
+//   }
+
+//   await AwesomeNotifications().cancel(action.id!);
+//   await AwesomeNotifications().cancelAll();
+//   return;
+// }
+
         if (action.buttonKeyPressed == 'DECLINE_CALL') {
           String? appointmentId;
 
@@ -4884,54 +4904,7 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
   }
 
   /// ================= FOREGROUND =================
-  void _setupForegroundFCM() {
-  FirebaseMessaging.onMessage.listen((message) async {
-    debugPrint("New Message on foreground: ${message.data}");
 
-    // if (message.data['type'] == "CALL_CANCELLED") {
-    //   await AwesomeNotifications().cancel(1002);
-    //   return;
-    // }
-    if (message.data['type'] == "CALL_CANCELLED") {
-  await AwesomeNotifications().cancel(1001);
-  await AwesomeNotifications().cancel(1002);
-  await AwesomeNotifications().cancelAll();
-  return;
-}
-
-
-    final meta = message.data['meta'];
-    if (meta == null || !meta.toString().contains('Calling')) return;
-
-    // ✅ show notification only
-    await AwesomeNotifications().createNotification(
-      content: NotificationContent(
-        id: 1002,
-        channelKey: 'call_channel',
-        title: 'Incoming Call',
-        body: 'Doctor is calling you',
-        category: NotificationCategory.Call,
-        payload: stringifyPayload(message.data),
-      ),
-      actionButtons: [
-        NotificationActionButton(
-          key: 'ACCEPT_CALL',
-          label: 'Accept',
-          color: Colors.green,
-        ),
-        NotificationActionButton(
-          key: 'DECLINE_CALL',
-          label: 'Decline',
-          color: Colors.red,
-          isDangerousOption: true,
-          actionType: ActionType.SilentBackgroundAction,
-        ),
-      ],
-    );
-
-  
-  });
-}
 
   // void _setupForegroundFCM() {
   //   FirebaseMessaging.onMessage.listen((message) async {
@@ -4975,6 +4948,24 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
   //     }
   //   });
   // }
+
+void _setupForegroundFCM() {
+  FirebaseMessaging.onMessage.listen((message) async {
+    debugPrint("New Message on foreground: ${message.data}");
+
+    if (message.data['type'] == "CALL_CANCELLED") {
+      await AwesomeNotifications().cancelAll();
+      try { await FlutterCallkitIncoming.endAllCalls(); } catch (_) {}
+      return;
+    }
+
+    final meta = message.data['meta'];
+    if (meta == null || !meta.toString().contains('Calling')) return;
+
+
+    _openCallFromPayload(stringifyPayload(message.data));
+  });
+}
 
   /// ================= TERMINATED FCM =================
   void _setupTerminatedFCM() async {
