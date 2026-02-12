@@ -4888,10 +4888,17 @@ class _EyeBuddyAppState extends State<EyeBuddyApp> {
   FirebaseMessaging.onMessage.listen((message) async {
     debugPrint("New Message on foreground: ${message.data}");
 
+    // if (message.data['type'] == "CALL_CANCELLED") {
+    //   await AwesomeNotifications().cancel(1002);
+    //   return;
+    // }
     if (message.data['type'] == "CALL_CANCELLED") {
-      await AwesomeNotifications().cancel(1002);
-      return;
-    }
+  await AwesomeNotifications().cancel(1001);
+  await AwesomeNotifications().cancel(1002);
+  await AwesomeNotifications().cancelAll();
+  return;
+}
+
 
     final meta = message.data['meta'];
     if (meta == null || !meta.toString().contains('Calling')) return;
